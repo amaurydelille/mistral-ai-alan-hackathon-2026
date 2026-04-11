@@ -8,7 +8,7 @@ interface MetricCardProps {
   label: string;
   value: string;
   unit?: string;
-  trend?: number[]; // raw values for sparkline
+  trend?: number[];
   trendColor?: string;
   trendFill?: string;
   note?: string;
@@ -36,40 +36,46 @@ export default function MetricCard({
       transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -2, transition: { duration: 0.15 } }}
       className={clsx(
-        "rounded-3xl bg-white/80 border border-mint-dark/30 shadow-sm p-6 flex flex-col gap-3",
+        "rounded-3xl bg-white/80 border border-mint-dark/30 shadow-sm p-6",
+        "flex flex-col justify-between gap-3",
         className
       )}
     >
-      <span className="text-xs font-medium uppercase tracking-widest text-ink-soft/60">
-        {label}
-      </span>
-
-      <div className="flex items-end gap-1">
-        <span
-          className={clsx(
-            "font-mono font-semibold leading-none tabular-nums",
-            size === "hero" ? "text-6xl" : "text-3xl"
-          )}
-        >
-          {value}
+      {/* Top: label + value */}
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium uppercase tracking-widest text-ink-soft/60">
+          {label}
         </span>
-        {unit && (
-          <span className="text-base text-ink-soft mb-1 font-body">{unit}</span>
-        )}
+        <div className="flex items-end gap-1">
+          <span
+            className={clsx(
+              "font-mono font-semibold leading-none tabular-nums",
+              size === "hero" ? "text-6xl" : "text-3xl"
+            )}
+          >
+            {value}
+          </span>
+          {unit && (
+            <span className="text-base text-ink-soft mb-1 font-body">{unit}</span>
+          )}
+        </div>
       </div>
 
-      {trend && (
-        <TrendSparkline
-          data={trend}
-          width={size === "hero" ? 180 : 120}
-          height={size === "hero" ? 48 : 36}
-          color={trendColor}
-          fillColor={trendFill}
-        />
-      )}
-
-      {note && (
-        <p className="text-xs text-ink-soft/70 leading-relaxed">{note}</p>
+      {/* Bottom: sparkline + note */}
+      {(trend || note) && (
+        <div className="flex flex-col gap-2">
+          {trend && (
+            <TrendSparkline
+              data={trend}
+              height={size === "hero" ? 56 : 44}
+              color={trendColor}
+              fillColor={trendFill}
+            />
+          )}
+          {note && (
+            <p className="text-xs text-ink-soft/70 leading-relaxed">{note}</p>
+          )}
+        </div>
       )}
     </motion.div>
   );
