@@ -35,6 +35,10 @@ export interface ActivityData {
   activeMin: number;
   sedentaryHours: number;
   workouts: string[];
+  burnedCalories?: number;   // total kcal (BMR + active)
+  activeCal?: number;        // active kcal only
+  hrZoneLightMin?: number;   // minutes in light HR zone
+  hrZoneModerateMin?: number; // minutes in moderate HR zone
 }
 
 export interface SelfReported {

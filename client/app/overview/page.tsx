@@ -39,6 +39,7 @@ interface OverviewResponse {
   briefing: DailyBriefingResponse;
   forecast: ForecastResponse;
   wellnessTrend: number[];
+  strokeRisk?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -232,13 +233,14 @@ export default function OverviewPage() {
     );
   }
 
-  const { profile, today, last14Days, trends7d, alert, briefing, forecast } = data;
+  const { profile, today, last14Days, trends7d, alert, briefing, forecast, strokeRisk = 0 } = data;
   const { forecast: forecastDays, rescuePlan, computed } = forecast;
   const { currentScores, sleepDebtMin, historicalComposites, historicalDates, dataSource, insights = [] } = computed;
 
   // ── Derived series for sparklines ──
   const sleepTrend = last14Days.map((d) => d.sleep.durationMin / 60);
   const rhrTrend = last14Days.map((d) => d.heart.restingHr);
+  const activeCalTrend = last14Days.map((d) => d.activity.activeCal ?? d.activity.activeMin * 4);
 
   const sleepHours = (today.sleep.durationMin / 60).toFixed(1);
   const deepPct =
@@ -347,16 +349,23 @@ export default function OverviewPage() {
                 delay={0.25}
               />
               <MetricCard
-                label="Sleep debt (7d)"
-                value={`${sleepDebtH}h${String(sleepDebtM).padStart(2, "0")}`}
-                unit=""
-                note={
-                  sleepDebtMin > 300
-                    ? "Significant debt — aim for full recovery nights"
-                    : sleepDebtMin > 120
-                    ? "Moderate debt — bank extra sleep this week"
-                    : "Sleep debt under control"
-                }
+                label="Active calories"
+                value={String(today.activity.activeCal ?? today.activity.activeMin * 4)}
+                unit="kcal"
+                trend={activeCalTrend}
+                trendColor="#5B9E72"
+                trendFill="#EAF5EE"
+                note={[
+                  today.activity.hrZoneModerateMin != null && today.activity.hrZoneModerateMin > 0
+                    ? `${today.activity.hrZoneModerateMin}min moderate`
+                    : null,
+                  today.activity.hrZoneLightMin != null && today.activity.hrZoneLightMin > 0
+                    ? `${today.activity.hrZoneLightMin}min light`
+                    : null,
+                  today.activity.burnedCalories != null && today.activity.burnedCalories > 0
+                    ? `${today.activity.burnedCalories} kcal total`
+                    : null,
+                ].filter(Boolean).join(" · ") || `${today.activity.steps.toLocaleString()} steps`}
                 delay={0.35}
               />
             </div>
@@ -460,7 +469,7 @@ export default function OverviewPage() {
             </div>
           </motion.div>
 
-          {insights.length > 0 && (
+          {(insights.length > 0 || strokeRisk > 10) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}>
               <p className="text-[10px] font-medium uppercase tracking-widest text-ink-soft/40 mb-3">
                 What your body is telling you
@@ -469,6 +478,21 @@ export default function OverviewPage() {
                 {insights.map((ins, i) => (
                   <InsightCard key={ins.id} insight={ins} delay={0.9 + i * 0.06} />
                 ))}
+                {strokeRisk > 10 && (
+                  <InsightCard
+                    delay={0.9 + insights.length * 0.06}
+                    insight={{
+                      id: "stroke-risk",
+                      level: strokeRisk >= 40 ? "alert" : "warn",
+                      title: "Cardiovascular load",
+                      value: `${strokeRisk}/100`,
+                      description:
+                        strokeRisk >= 40
+                          ? `Your resting HR has been ${trends7d.avgRhr - (profile.baselineRhr || 56)}bpm above baseline for 7 days and sleep debt is accumulating — this combination raises vascular strain. Prioritise recovery sleep and reduce caffeine today.`
+                          : `Resting HR is trending ${trends7d.avgRhr - (profile.baselineRhr || 56)}bpm above your baseline. Sleep debt compounds this — a full night's sleep tonight will start to reverse it.`,
+                    }}
+                  />
+                )}
               </div>
             </motion.div>
           )}

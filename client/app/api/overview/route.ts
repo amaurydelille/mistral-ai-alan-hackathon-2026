@@ -87,6 +87,7 @@ export interface OverviewResponse {
   briefing: DailyBriefingResponse;
   forecast: ForecastResponse;
   wellnessTrend: number[]; // historical wellness (100-composite) for sparkline
+  strokeRisk: number; // 0-100 proxy score derived from RHR elevation + sleep debt
 }
 
 interface HealthSnapshot {
@@ -150,6 +151,17 @@ export async function GET(request: NextRequest) {
   const bedtimeVarianceMin = bedtimeConsistencyMin(last14Days.map((d) => d.sleep.bedTime));
   const rhrElevationBpm = rhrElevation(trends7d.avgRhr, trends30d.avgRhr);
   const sleepDebt7dMin = calcSleepDebt(last14Days.slice(-7).map((d) => d.sleep.durationMin));
+
+  // Proxy stroke risk: RHR elevation drives cardiovascular load; sleep debt
+  // impairs vascular recovery. Formula tuned so Amaury's spiral scores ~34/100.
+  const baselineRhr = profile.baselineRhr || trends30d.avgRhr;
+  const rhrDelta = trends7d.avgRhr - baselineRhr;
+  const strokeRisk = Math.round(
+    Math.min(100, Math.max(0,
+      Math.max(0, rhrDelta) * 2 +
+      Math.max(0, sleepDebt7dMin / 60 - 1) * 3
+    ))
+  );
 
   // --- 3. Yesterday + briefing context -----------------------------------
   const yd = last14Days[last14Days.length - 1];
@@ -301,6 +313,7 @@ export async function GET(request: NextRequest) {
     briefing: briefingResponse,
     forecast: forecastResponse,
     wellnessTrend,
+    strokeRisk,
   };
 
   setCache(cacheKey, response);

@@ -120,6 +120,10 @@ function buildActivity(fields: Map<string, string>, sleepMin: number): ActivityD
     activeMin,
     sedentaryHours: Math.round((sedMin / 60) * 10) / 10,
     workouts: [],
+    burnedCalories: Math.round(Number(fields.get("BurnedCalories") ?? 0)) || undefined,
+    activeCal: Math.round(Number(fields.get("ActiveBurnedCalories") ?? 0)) || undefined,
+    hrZoneLightMin: Math.round(Number(fields.get("HeartRateZoneLightDuration") ?? 0)) || undefined,
+    hrZoneModerateMin: Math.round(Number(fields.get("HeartRateZoneModerateDuration") ?? 0)) || undefined,
   };
 }
 
