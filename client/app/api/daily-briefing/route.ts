@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { fetchDailyData } from "@/lib/thryve";
 import { transformItManager } from "@/lib/thryve-transform";
+import { getDemoIndexFromRequest, getDemoSnapshot } from "@/lib/demo-time";
 import { computeForecast, calcSleepDebt } from "@/lib/forecast";
 import type { DailyBriefingResponse, DayData, Trends, UserProfile } from "@/lib/types";
 import type { ThryveScore } from "@/lib/thryve-transform";
@@ -216,36 +217,44 @@ interface HealthSnapshot {
   thryveScores: ThryveScore[];
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   const endUserId = process.env.THRYVE_IT_MANAGER_ID;
+  const demoIdx = getDemoIndexFromRequest(request);
 
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0];
 
-  // Cache key auto-invalidates at midnight (calendar date changes)
-  const cacheKey = `${endUserId ?? "mock"}:${todayStr}`;
+  // Cache key includes demo index so different demo days get distinct cached responses
+  const cacheKey = demoIdx !== null
+    ? `demo:${demoIdx}`
+    : `${endUserId ?? "mock"}:${todayStr}`;
+
   const cached = getCached(cacheKey);
   if (cached) {
     return Response.json(cached, { headers: { "X-Cache": "HIT" } });
   }
 
-  // Fetch live data, fall back to mock when Thryve is unavailable
+  // Demo mode: bypass Thryve
   let health: HealthSnapshot;
-  try {
-    if (!endUserId) throw new Error("No THRYVE_IT_MANAGER_ID");
-    const endDay = todayStr;
-    const startDay = subtractDays(now, 30);
-    const raw = await fetchDailyData(endUserId, startDay, endDay);
-    health = transformItManager(raw) as HealthSnapshot;
-  } catch {
-    health = {
-      profile: marie,
-      today: mockToday,
-      last14Days: mockLast14Days,
-      trends7d: mockTrends7d,
-      trends30d: mockTrends30d,
-      thryveScores: [],
-    };
+  if (demoIdx !== null) {
+    health = getDemoSnapshot(demoIdx) as HealthSnapshot;
+  } else {
+    try {
+      if (!endUserId) throw new Error("No THRYVE_IT_MANAGER_ID");
+      const endDay = todayStr;
+      const startDay = subtractDays(now, 30);
+      const raw = await fetchDailyData(endUserId, startDay, endDay);
+      health = transformItManager(raw) as HealthSnapshot;
+    } catch {
+      health = {
+        profile: marie,
+        today: mockToday,
+        last14Days: mockLast14Days,
+        trends7d: mockTrends7d,
+        trends30d: mockTrends30d,
+        thryveScores: [],
+      };
+    }
   }
 
   const { profile, today: todayData, last14Days, trends7d, trends30d, thryveScores } = health;

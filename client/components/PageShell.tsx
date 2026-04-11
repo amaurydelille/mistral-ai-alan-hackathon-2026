@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import Nav from "./Nav";
+import DemoTimeControl from "./DemoTimeControl";
 
 interface PageShellProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ export default function PageShell({ children, className = "" }: PageShellProps) 
       >
         {children}
       </motion.main>
+      <DemoTimeControl />
     </div>
   );
 }
