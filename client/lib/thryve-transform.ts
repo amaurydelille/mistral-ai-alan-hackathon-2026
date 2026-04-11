@@ -281,12 +281,24 @@ export function transformItManager(raw: ThryveRawDaily[]): HealthData {
   const todayFields = dayMap.get(todayDate)!;
   const today = buildDay(todayDate, todayFields, tzOffset);
 
-  // last14Days: up to 14 days before today, oldest first
-  const last14Days = sortedDates
+  // last14Days: up to 14 days before today, oldest first.
+  // Over-sample (28 days), filter out fully-unsynced days, take 14, then crop
+  // from the end so all series stop at the last day where every non-optional
+  // metric has a valid value (restingHr can never be 0 on a real day).
+  const last14DaysRaw = sortedDates
     .filter((d) => d < todayDate)
+    .slice(0, 28)
+    .map((d) => buildDay(d, dayMap.get(d)!, tzOffset))
+    .filter((d) => d.sleep.durationMin > 0 || d.activity.steps > 0 || d.heart.restingHr > 0)
     .slice(0, 14)
-    .reverse()
-    .map((d) => buildDay(d, dayMap.get(d)!, tzOffset));
+    .reverse();
+
+  // Find the last index where all non-optional metrics are valid.
+  let validUntil = last14DaysRaw.length - 1;
+  while (validUntil >= 0 && last14DaysRaw[validUntil].heart.restingHr === 0) {
+    validUntil--;
+  }
+  const last14Days = last14DaysRaw.slice(0, validUntil + 1);
 
   // Windows for trends (use all available data, capped)
   const all = [...sortedDates].reverse().map((d) => buildDay(d, dayMap.get(d)!, tzOffset));
