@@ -74,6 +74,33 @@ export interface ForecastDay {
   label: string;
   risk: RiskLevel;
   reason: string;
+  composite?: number;
+  sickLeave?: number;
+  insomniaRisk?: number;
+  mentalHealthRisk?: number;
+}
+
+export interface RescuePlanStep {
+  step: number;
+  action: string;
+  why: string;
+}
+
+export interface ForecastResponse {
+  forecast: ForecastDay[];
+  rescuePlan: RescuePlanStep[];
+  computed: {
+    currentScores: {
+      sickLeave: number;
+      insomniaRisk: number;
+      mentalHealthRisk: number;
+      composite: number;
+    };
+    sleepDebtMin: number;
+    historicalComposites: number[];
+    historicalDates: string[];
+    dataSource: "thryve-ml" | "biometric-proxy";
+  };
 }
 
 export interface WeeklyMetric {
