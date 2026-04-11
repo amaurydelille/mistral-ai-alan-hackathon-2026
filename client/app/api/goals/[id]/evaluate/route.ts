@@ -77,9 +77,9 @@ async function evaluateAbstractGoal(
   const apiKey = process.env.MISTRAL_API_KEY;
   if (!apiKey) return { met: fallbackMet, message: fallbackMsg };
 
-  const prompt = `You are a personal health coach. A user has set a behavioral goal. Evaluate whether they met it based on today's self-reported data.
+  const prompt = `You are a personal health coach. A user made a promise to themselves. Evaluate whether they kept it based on today's self-reported data.
 
-Goal: "${goalDesc}"
+Promise: "${goalDesc}"
 
 Today's self-reported data:
 - Caffeine: ${sr.caffeine}
@@ -90,10 +90,10 @@ Today's self-reported data:
 - Stress: ${sr.stress}/5, Energy: ${sr.energy}/5, Mood: ${sr.mood}/5
 - Notes: "${sr.notes || "none"}"
 
-Did the user meet the goal today? Respond ONLY with valid JSON:
+Did they keep this promise today? Respond ONLY with valid JSON:
 {
   "met": true or false,
-  "message": "≤20 words, specific, reference their data"
+  "message": "≤20 words. If kept: warm and specific ('Promise kept — no caffeine recorded'). If broken: direct and motivating, no lecturing ('Screens logged before bed — try cutting 30min earlier tonight')."
 }`;
 
   try {
@@ -170,10 +170,14 @@ export async function GET(
     const apiKey = process.env.MISTRAL_API_KEY;
     if (apiKey) {
       const directionWord = goal.comparator === "gte" ? "at least" : "no more than";
+      const shortfall = goal.comparator === "gte"
+        ? goal.target - currentValue
+        : currentValue - goal.target;
       const prompt = `You are coaching ${marie.name}, ${marie.age}, ${marie.job}.
-Goal: "${goal.title}" — ${directionWord} ${goal.target} ${goal.unit} over ${goal.timeframe === "1d" ? "today" : "7 days"}.
-Current value: ${currentValue} ${goal.unit} (${percentComplete}% of target). Status: ${status}.
-Tone: ${sentiment === "encouragement" ? "warm and celebratory" : "direct and motivating, not harsh"}.
+They made a promise: "${goal.title}" — ${directionWord} ${goal.target} ${goal.unit} over ${goal.timeframe === "1d" ? "today" : "7 days"}.
+Actual: ${currentValue} ${goal.unit} (${percentComplete}% of target). Status: ${status}.
+${status === "achieved" ? `They kept their promise.` : `They ${shortfall > 0 ? `are ${Math.round(shortfall)} ${goal.unit} short` : `exceeded the limit by ${Math.round(-shortfall)} ${goal.unit}`}.`}
+Tone: ${sentiment === "encouragement" ? "warm, celebratory, mention the actual number" : "honest and motivating — state the gap, end with one small action"}.
 Respond ONLY with valid JSON: { "message": "≤20 words, specific, reference actual numbers" }`;
 
       try {

@@ -51,8 +51,19 @@ export default function OnboardingPage() {
   const [restored, setRestored] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Restore completed state from localStorage on mount
+  // Restore completed state from localStorage on mount.
+  // If URL contains ?reset (nav link click), wipe storage and start fresh.
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("reset")) {
+      localStorage.removeItem(STORAGE_KEY);
+      // Strip the query param from the URL without adding a history entry
+      router.replace("/onboarding");
+      return; // leave all state at defaults — fresh start
+    }
+
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (!saved) return;
@@ -68,6 +79,7 @@ export default function OnboardingPage() {
     } catch {
       // corrupted storage — ignore and start fresh
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Focus input only on fresh start

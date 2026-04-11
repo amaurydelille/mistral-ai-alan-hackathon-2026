@@ -12,6 +12,7 @@ import InsightCard from "@/components/InsightCard";
 import SignalChip from "@/components/SignalChip";
 import LiveBadge from "@/components/LiveBadge";
 import CoachMessage from "@/components/CoachMessage";
+import Link from "next/link";
 import type {
   DayData,
   Trends,
@@ -19,6 +20,10 @@ import type {
   DailyBriefingResponse,
   ForecastResponse,
   RiskLevel,
+  GoalWithProgress,
+  GoalStatus,
+  GoalMetric,
+  Goal,
 } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
@@ -102,10 +107,75 @@ function OverviewSkeleton() {
 // Main page
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Promise verdict helpers (compact, no Mistral needed)
+// ---------------------------------------------------------------------------
+
+const PROMISE_VERBS: Partial<Record<GoalMetric, string>> = {
+  sleep_duration_min: "slept",
+  deep_sleep_min: "got",
+  steps: "walked",
+  active_min: "active for",
+  resting_hr: "HR was",
+  sedentary_hours: "sedentary for",
+  avg_stress: "stress",
+};
+
+function fmtPromiseVal(value: number, unit: string): string {
+  if (unit === "min" && value >= 60) {
+    const h = Math.floor(Math.abs(value) / 60);
+    const m = Math.round(Math.abs(value) % 60);
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+  if (unit === "steps" && Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}k`;
+  return `${Math.round(value * 10) / 10}${unit ? " " + unit : ""}`;
+}
+
+function promiseVerdict(goal: Goal, value: number, status: GoalStatus): string {
+  if (goal.goalType === "abstract") {
+    return status === "achieved" ? "Kept today." : "Not kept today.";
+  }
+  const verb = PROMISE_VERBS[goal.metric] ?? "recorded";
+  const actual = fmtPromiseVal(value, goal.unit);
+  const target = fmtPromiseVal(goal.target, goal.unit);
+  if (status === "achieved") {
+    if (goal.comparator === "gte" && value > goal.target) {
+      return `You ${verb} ${actual} — ${fmtPromiseVal(value - goal.target, goal.unit)} over ${target}.`;
+    }
+    return `You ${verb} ${actual}.`;
+  }
+  if (goal.comparator === "gte") {
+    return `You ${verb} ${actual} instead of ${target}.`;
+  }
+  return `You ${verb} ${actual} — over your ${target} limit.`;
+}
+
+const PROMISE_STATUS_STYLE: Record<GoalStatus, { badge: string; dot: string; text: string }> = {
+  achieved:   { badge: "bg-sage/15 text-sage",        dot: "bg-sage",      text: "text-sage" },
+  "on-track": { badge: "bg-sage/10 text-sage",         dot: "bg-sage/50",   text: "text-ink-soft" },
+  "at-risk":  { badge: "bg-amber-100 text-amber-700",  dot: "bg-amber-400", text: "text-amber-700" },
+  "off-track":{ badge: "bg-coral/15 text-coral",       dot: "bg-coral",     text: "text-coral" },
+};
+
+const PROMISE_BADGE_LABEL: Record<GoalStatus, string> = {
+  achieved:   "KEPT",
+  "on-track": "ON TRACK",
+  "at-risk":  "AT RISK",
+  "off-track":"BROKEN",
+};
+
 export default function OverviewPage() {
   const [data, setData] = useState<OverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [promises, setPromises] = useState<GoalWithProgress[]>([]);
+
+  useEffect(() => {
+    fetch("/api/goals")
+      .then((r) => r.json())
+      .then((d: GoalWithProgress[]) => setPromises(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch("/api/overview")
@@ -451,7 +521,71 @@ export default function OverviewPage() {
         )}
 
         {/* ══════════════════════════════════════════════════════════════
-            8. WELLNESS TREND CHART
+            8. PROMISES WIDGET
+            ══════════════════════════════════════════════════════════════ */}
+        {promises.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.95, duration: 0.4 }}
+          >
+            <div className="flex items-baseline justify-between mb-3">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-ink-soft/40">
+                Your promises
+              </p>
+              <Link
+                href="/promises"
+                className="text-xs font-medium text-sage hover:text-sage-dark transition-colors"
+              >
+                See all →
+              </Link>
+            </div>
+
+            <div className="rounded-3xl bg-white/80 border border-mint-dark/30 shadow-sm overflow-hidden">
+              {promises.map(({ goal, progress }, i) => {
+                const cfg = PROMISE_STATUS_STYLE[progress.status];
+                const verdict = promiseVerdict(goal, progress.currentValue, progress.status);
+                const isLast = i === promises.length - 1;
+                return (
+                  <motion.div
+                    key={goal.id}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1 + i * 0.06, duration: 0.3 }}
+                    className={clsx(
+                      "flex items-center gap-4 px-5 py-4",
+                      !isLast && "border-b border-mint-dark/20"
+                    )}
+                  >
+                    {/* Status dot */}
+                    <div className={clsx("w-2 h-2 rounded-full shrink-0", cfg.dot)} />
+
+                    {/* Promise title + verdict */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-ink leading-none mb-0.5 truncate">
+                        {goal.title}
+                      </p>
+                      <p className={clsx("text-xs leading-snug", cfg.text)}>
+                        {verdict}
+                      </p>
+                    </div>
+
+                    {/* Badge */}
+                    <span className={clsx(
+                      "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase",
+                      cfg.badge
+                    )}>
+                      {PROMISE_BADGE_LABEL[progress.status]}
+                    </span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════
+            9. WELLNESS TREND CHART
             ══════════════════════════════════════════════════════════════ */}
         <AnimatePresence>
           {historicalComposites.length >= 2 && (
@@ -487,7 +621,7 @@ export default function OverviewPage() {
         </AnimatePresence>
 
         {/* ══════════════════════════════════════════════════════════════
-            METHODOLOGY FOOTNOTE
+            10. METHODOLOGY FOOTNOTE
             ══════════════════════════════════════════════════════════════ */}
         <motion.div
           initial={{ opacity: 0 }}
