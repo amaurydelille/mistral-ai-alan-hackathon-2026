@@ -166,10 +166,12 @@ export default function PromiseCard({
   }, [goal.id]);
 
   const status = progress?.status ?? initialStatus;
+  // Today's focus promise: if not achieved yet, treat as at-risk to signal urgency
+  const displayStatus: GoalStatus = hero && status === "on-track" ? "at-risk" : status;
   const value = progress?.currentValue ?? initialValue;
   const pct = Math.min(progress?.percentComplete ?? initialPercentComplete, 100);
-  const cfg = STATUS_CFG[status];
-  const verdict = buildVerdict(goal, value, status);
+  const cfg = STATUS_CFG[displayStatus];
+  const verdict = buildVerdict(goal, value, displayStatus);
 
   const content = (
     <div className={clsx("flex flex-col", hero ? "gap-4 p-6" : "gap-3 p-5")}>
