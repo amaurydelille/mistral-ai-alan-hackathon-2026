@@ -86,6 +86,14 @@ export interface RescuePlanStep {
   why: string;
 }
 
+export interface ForecastInsight {
+  id: string;
+  level: "ok" | "warn" | "alert";
+  title: string;
+  description: string;
+  value: string;
+}
+
 export interface ForecastResponse {
   forecast: ForecastDay[];
   rescuePlan: RescuePlanStep[];
@@ -100,6 +108,7 @@ export interface ForecastResponse {
     historicalComposites: number[];
     historicalDates: string[];
     dataSource: "thryve-ml" | "biometric-proxy";
+    insights: ForecastInsight[];
   };
 }
 

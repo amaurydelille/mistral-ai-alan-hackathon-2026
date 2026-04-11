@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { fetchDailyData } from "@/lib/thryve";
 import { transformItManager } from "@/lib/thryve-transform";
-import { computeForecast } from "@/lib/forecast";
+import { computeForecast, countConsecutiveBadNights, bedtimeConsistencyMin, rhrElevation } from "@/lib/forecast";
 import type { ForecastDay, RescuePlanStep, ForecastResponse } from "@/lib/types";
 import type { ComputedForecastDay } from "@/lib/forecast";
 
@@ -60,6 +60,10 @@ async function generateNarrative(
     currentSickLeave: number;
     currentInsomnia: number;
     currentMentalHealth: number;
+    consecutiveBadNights: number;
+    bedtimeVarianceMin: number;
+    rhrElevationBpm: number;
+    projectionBias: number;
   }
 ): Promise<NarrativeResult> {
   const fallback: NarrativeResult = {
@@ -89,9 +93,11 @@ async function generateNarrative(
   const prompt = `You are a precise health coach. Respond ONLY with valid JSON.
 
 Biometric context (last 7 days):
-- Resting HR: ${ctx.avgRhr} bpm, trend: ${ctx.rhrTrend}
-- Average sleep: ${avgSleepHours}, deep sleep trend: ${ctx.deepSleepTrend}
-- Sleep debt this week: ${sleepDebtHours}
+- Resting HR: ${ctx.avgRhr} bpm (trend: ${ctx.rhrTrend}${ctx.rhrElevationBpm >= 3 ? `, +${ctx.rhrElevationBpm} bpm above 30d baseline` : ""})
+- Average sleep: ${avgSleepHours} (deep sleep trend: ${ctx.deepSleepTrend})
+- Sleep debt this week: ${sleepDebtHours}${ctx.projectionBias > 0 ? ` (adding +${ctx.projectionBias} pts to projection)` : ""}
+- Consecutive nights below average: ${ctx.consecutiveBadNights}
+- Bedtime schedule variance: ±${ctx.bedtimeVarianceMin} min
 - Thryve sick-leave risk: ${ctx.currentSickLeave}/100
 - Thryve insomnia risk: ${ctx.currentInsomnia}/100
 - Thryve mental-health risk: ${ctx.currentMentalHealth}/100
@@ -190,6 +196,11 @@ export async function GET(_request: NextRequest) {
       health.trends30d
     );
 
+    const avgSleep30d = health.trends30d.avgSleepDuration || health.trends7d.avgSleepDuration;
+    const streak = countConsecutiveBadNights(health.last14Days, avgSleep30d);
+    const bedtimeVarianceMin = bedtimeConsistencyMin(health.last14Days.map((d) => d.sleep.bedTime));
+    const rhrElevationBpm = rhrElevation(health.trends7d.avgRhr, health.trends30d.avgRhr);
+
     const narrative = await generateNarrative(computed.days, {
       avgRhr: health.trends7d.avgRhr,
       rhrTrend: health.trends7d.rhrTrend,
@@ -199,6 +210,10 @@ export async function GET(_request: NextRequest) {
       currentSickLeave: computed.currentScores.sickLeave,
       currentInsomnia: computed.currentScores.insomniaRisk,
       currentMentalHealth: computed.currentScores.mentalHealthRisk,
+      consecutiveBadNights: streak,
+      bedtimeVarianceMin,
+      rhrElevationBpm,
+      projectionBias: computed.projectionBias,
     });
 
     const forecast: ForecastDay[] = computed.days.map((d, i) => ({
@@ -221,6 +236,7 @@ export async function GET(_request: NextRequest) {
         historicalComposites: computed.historicalComposites,
         historicalDates: computed.historicalDates,
         dataSource: computed.dataSource,
+        insights: computed.insights,
       },
     };
 
