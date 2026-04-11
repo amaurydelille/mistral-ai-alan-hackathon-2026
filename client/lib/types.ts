@@ -110,3 +110,44 @@ export interface WeeklyMetric {
   delta: number;
   deltaLabel: string;
 }
+
+export interface DailyBriefingResponse {
+  date: string;
+  today: {
+    sleepDurationMin: number;
+    deepSleepMin: number;
+    sleepEfficiency: number;
+    bedTime: string;
+    wakeTime: string;
+    restingHr: number;
+    steps: number;
+    activeMin: number;
+    stress?: number;
+    energy?: number;
+    mood?: number;
+  };
+  past: {
+    yesterday: {
+      sleepDurationMin: number;
+      deepSleepMin: number;
+      restingHr: number;
+      steps: number;
+    };
+    sevenDay: {
+      avgSleepMin: number;
+      avgDeepSleepMin: number;
+      avgRhr: number;
+      avgSteps: number;
+      avgStress: number;
+    };
+    sleepDebt7dMin: number;
+  };
+  todayRisk: {
+    level: RiskLevel;
+    composite: number;
+    reason: string;
+  };
+  narrative: string;
+  topInsight: string;
+  actionTip: string;
+}

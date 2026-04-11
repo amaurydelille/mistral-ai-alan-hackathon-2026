@@ -139,7 +139,8 @@ export default function ForecastPage() {
 
   const { forecast, rescuePlan, computed } = data;
   const { currentScores, sleepDebtMin, historicalComposites, historicalDates, dataSource } = computed;
-  const projectedComposites = forecast.map((d) => d.composite ?? 50);
+  const projectedComposites = forecast.map((d) => 100 - (d.composite ?? 50));
+  const wellnessHistorical = historicalComposites.map((c) => 100 - c);
 
   const highestRisk = forecast.reduce((a, b) => {
     const order = { low: 0, moderate: 1, high: 2 };
@@ -280,22 +281,23 @@ export default function ForecastPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-widest text-ink-soft/50">
-                    Risk trajectory
+                    Wellness score
                   </p>
                   <p className="text-xs text-ink-soft/40 mt-0.5">
                     Solid = history (EWMA) · Dashed = 3-day projection
                   </p>
                 </div>
                 <div className="flex items-center gap-3 text-[10px] text-ink-soft/40 font-mono">
-                  <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-coral rounded" />≥65</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-sage rounded" />≥65</span>
                   <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-amber rounded" />≥40</span>
-                  <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-sage rounded" />low</span>
+                  <span className="flex items-center gap-1"><span className="inline-block w-3 h-0.5 bg-coral rounded" />low</span>
                 </div>
               </div>
               <ForecastChart
-                historical={historicalComposites}
+                historical={wellnessHistorical}
                 projected={projectedComposites}
                 historicalDates={historicalDates}
+                inverted
               />
             </motion.div>
           )}
