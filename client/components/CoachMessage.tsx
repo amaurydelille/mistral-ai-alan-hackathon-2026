@@ -6,6 +6,8 @@ import clsx from "clsx";
 interface CoachMessageProps {
   text: string;
   from?: "coach" | "user";
+  /** bubble = chat UI; plain = full-width paragraph (e.g. inside a dashboard card) */
+  variant?: "bubble" | "plain";
   typewriter?: boolean;
   speed?: number; // ms per char
   onDone?: () => void;
@@ -15,6 +17,7 @@ interface CoachMessageProps {
 export default function CoachMessage({
   text,
   from = "coach",
+  variant = "bubble",
   typewriter = false,
   speed = 18,
   onDone,
@@ -45,6 +48,22 @@ export default function CoachMessage({
   }, [text, typewriter, speed, onDone]);
 
   const isCoach = from === "coach";
+
+  if (variant === "plain" && isCoach) {
+    return (
+      <p
+        className={clsx(
+          "text-sm leading-relaxed text-ink m-0",
+          className
+        )}
+      >
+        {displayed}
+        {typewriter && displayed.length < text.length && (
+          <span className="inline-block w-0.5 h-3.5 bg-sage ml-0.5 animate-pulse align-text-bottom" />
+        )}
+      </p>
+    );
+  }
 
   return (
     <div

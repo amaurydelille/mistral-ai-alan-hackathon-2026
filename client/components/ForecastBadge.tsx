@@ -74,7 +74,7 @@ export default function ForecastBadge({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
       className={clsx(
-        "rounded-3xl border p-6 flex flex-col gap-5 h-full",
+        "rounded-2xl border p-3.5 sm:p-4 flex flex-col gap-2.5",
         cfg.bg,
         cfg.border
       )}
@@ -82,14 +82,14 @@ export default function ForecastBadge({
       {/* ── Row 1: day label + risk pill ─────────────────── */}
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-base font-semibold uppercase tracking-widest text-ink">
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink">
             {label}
           </p>
-          <p className="text-xs text-ink-soft/60 mt-0.5">{formatDate(date)}</p>
+          <p className="text-[11px] text-ink-soft/60 mt-0.5">{formatDate(date)}</p>
         </div>
 
         <span className={clsx(
-          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap",
+          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold whitespace-nowrap",
           cfg.pill
         )}>
           {risk === "high" ? (
@@ -109,18 +109,18 @@ export default function ForecastBadge({
       {wellnessScore !== undefined && (
         <div className="flex flex-col gap-0.5">
           <div className="flex items-end gap-1 leading-none">
-            <span className={clsx("font-mono font-bold tabular-nums", cfg.scoreColor, "text-6xl")}>
+            <span className={clsx("font-mono font-bold tabular-nums", cfg.scoreColor, "text-2xl sm:text-3xl")}>
               {wellnessScore}
             </span>
-            <span className="text-sm text-ink-soft/50 mb-2 font-mono">/100</span>
+            <span className="text-[10px] text-ink-soft/50 mb-0.5 font-mono">/100</span>
           </div>
-          <p className="text-[10px] uppercase tracking-widest text-ink-soft/40 font-medium">wellness score</p>
+          <p className="text-[9px] uppercase tracking-widest text-ink-soft/40 font-medium">wellness score</p>
         </div>
       )}
 
       {/* ── Row 3: progress bar ───────────────────────────── */}
       {composite !== undefined && (
-        <div className={clsx("h-1.5 rounded-full overflow-hidden", cfg.barTrack)}>
+        <div className={clsx("h-1 rounded-full overflow-hidden", cfg.barTrack)}>
           <motion.div
             className={clsx("h-full rounded-full", cfg.barColor)}
             initial={{ width: 0 }}
@@ -131,7 +131,7 @@ export default function ForecastBadge({
       )}
 
       {/* ── Row 4: reason ────────────────────────────────── */}
-      <p className="text-sm text-ink leading-relaxed mt-auto">{reason}</p>
+      <p className="text-xs text-ink leading-snug">{reason}</p>
     </motion.div>
   );
 }
