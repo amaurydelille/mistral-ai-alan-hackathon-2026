@@ -35,6 +35,18 @@ function formatFullDate(dateStr: string): string {
   });
 }
 
+function parseBold(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith("**") && part.endsWith("**")
+      ? <strong key={i} className="font-semibold text-ink">{part.slice(2, -2)}</strong>
+      : <span key={i}>{part}</span>
+  );
+}
+
+function BoldText({ text, className }: { text: string; className?: string }) {
+  return <p className={className}>{parseBold(text)}</p>;
+}
+
 export default function DashboardPage() {
   const [data, setData] = useState<HealthData | null>(null);
   const [briefing, setBriefing] = useState<DailyBriefingResponse | null>(null);
@@ -64,16 +76,18 @@ export default function DashboardPage() {
       .catch(() => setBriefingText(dashboardBriefing));
   }, []);
 
-  // Typewriter — runs exactly once when briefingText is first set
+  // Typewriter — runs exactly once when briefingText is first set.
+  // Strip **markers** so they never appear mid-animation; bold is applied after.
   useEffect(() => {
     if (!briefingText) return;
+    const plain = briefingText.replace(/\*\*/g, "");
     setDisplayed("");
     setBriefingDone(false);
     idxRef.current = 0;
     const tick = () => {
       idxRef.current++;
-      setDisplayed(briefingText.slice(0, idxRef.current));
-      if (idxRef.current < briefingText.length) {
+      setDisplayed(plain.slice(0, idxRef.current));
+      if (idxRef.current < plain.length) {
         timerId = setTimeout(tick, 12);
       } else {
         setBriefingDone(true);
@@ -177,7 +191,7 @@ export default function DashboardPage() {
             {formatFullDate(today.date)}
           </p>
           <h1 className="font-display text-3xl font-semibold text-ink">
-            Good morning, Marie
+            Good morning, Amaury
             <span className="text-sage">.</span>
           </h1>
         </motion.div>
@@ -206,12 +220,12 @@ export default function DashboardPage() {
                 <div className="h-2.5 bg-ink/8 rounded-full w-4/6 animate-pulse" />
                 <div className="h-2.5 bg-ink/8 rounded-full w-3/5 animate-pulse" />
               </div>
+            ) : briefingDone ? (
+              <BoldText text={briefingText} className="text-sm text-ink leading-relaxed" />
             ) : (
               <p className="text-sm text-ink leading-relaxed">
                 {displayed}
-                {!briefingDone && (
-                  <span className="inline-block w-0.5 h-3.5 bg-sage ml-0.5 animate-pulse align-text-bottom" />
-                )}
+                <span className="inline-block w-0.5 h-3.5 bg-sage ml-0.5 animate-pulse align-text-bottom" />
               </p>
             )}
 
@@ -227,11 +241,11 @@ export default function DashboardPage() {
                   <div className="flex flex-col gap-2">
                     <p className="text-xs text-ink font-medium leading-snug">
                       <span className="text-sage mr-1">💡</span>
-                      {briefing.topInsight}
+                      {parseBold(briefing.topInsight)}
                     </p>
                     <p className="text-xs text-ink-soft/70 leading-snug">
                       <span className="mr-1">→</span>
-                      {briefing.actionTip}
+                      {parseBold(briefing.actionTip)}
                     </p>
                   </div>
                 )}

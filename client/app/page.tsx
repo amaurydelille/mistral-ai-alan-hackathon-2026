@@ -40,7 +40,7 @@ export default function Home() {
 
         {/* Demo persona hint */}
         <p className="mt-8 text-xs text-ink-soft/40">
-          Demo persona: Marie, 31 · Product Manager, Paris
+          Demo persona: Amaury, 31 · Product Manager, Paris
         </p>
 
         {/* Floating bottom stats */}

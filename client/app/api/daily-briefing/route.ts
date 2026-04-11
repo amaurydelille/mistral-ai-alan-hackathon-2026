@@ -160,7 +160,7 @@ Today's wellness risk: ${riskLevel} (score ${riskComposite}/100) — ${riskReaso
 
 Return this exact JSON:
 {
-  "narrative": "2-3 sentences: warm but direct morning briefing, reference actual numbers",
+  "narrative": "2-3 sentences: warm but direct morning briefing, reference actual numbers. Use **bold** (double asterisks) around key numbers and terms like sleep duration, RHR, HRV, deep sleep, and any trend that matters.",
   "topInsight": "≤15 words: the single most notable delta vs recent history",
   "actionTip": "≤15 words: one specific, actionable recommendation for today"
 }

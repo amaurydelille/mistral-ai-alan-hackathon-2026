@@ -1,59 +1,36 @@
 // All pre-written coach responses — keyed by screen.
-// Every paragraph references Marie's actual mock numbers so the demo feels
+// Every paragraph references Amaury's actual mock numbers so the demo feels
 // like live AI output. Replace this file's imports with real Mistral calls
 // in the next iteration.
 
 export const onboardingScript = [
   {
     from: "coach" as const,
-    text: "Hey Marie! I'm your health coach. I'm going to ask you a few quick questions so I can personalize everything for you. This takes about 2 minutes — no forms, I promise. Ready?",
+    text: "Hi Amaury. I'm Vital, your AI health coach. I've connected your wearable — the data is already loaded. One question before I show you: what's your main focus right now?",
   },
   {
     from: "user" as const,
-    text: "Yes, let's go!",
+    text: "Sleep and energy mostly. I've been running on empty for weeks.",
   },
   {
     from: "coach" as const,
-    text: "Great. First — what are the top 1 or 2 things you'd most like to improve about your health or energy right now?",
-  },
-  {
-    from: "user" as const,
-    text: "I want to sleep better and feel less exhausted at work. Stress has been through the roof lately.",
-  },
-  {
-    from: "coach" as const,
-    text: "Got it — sleep quality and stress management. Those are closely linked, which is actually good news. Do you have any physical constraints I should know about? Injuries, limited time, no gym access?",
-  },
-  {
-    from: "user" as const,
-    text: "No gym, and my evenings are usually packed with meetings or social stuff.",
-  },
-  {
-    from: "coach" as const,
-    text: "Perfect, I'll keep everything practical for your schedule. Last question: do you drink caffeine or alcohol regularly? No judgment — I just need this to give you accurate advice.",
-  },
-  {
-    from: "user" as const,
-    text: "Yes to both. Usually 2-3 coffees a day, and wine a few nights a week.",
-  },
-  {
-    from: "coach" as const,
-    text: "That's really useful — these are actually two of the biggest levers for your sleep quality. I've built your profile. Let me pull in your health data and I'll show you exactly what's going on.",
+    text: "That tracks exactly with what I'm seeing in your data. Sleep debt, a rising resting heart rate, and a bedtime that's been slipping later every night. I've built your profile — let me show you what's actually going on.",
     extractedProfile: {
-      name: "Marie",
+      name: "Amaury",
       age: 31,
       job: "Product Manager",
-      goals: ["better sleep", "reduce stress"],
-      constraints: ["no gym", "busy evenings"],
+      goals: ["better sleep", "more energy"],
       caffeine: "2–3 coffees/day",
       alcohol: "wine a few nights/week",
-      key_insight: "Caffeine + alcohol combination is the #1 sleep disruptor to address",
+      key_insight: "Late bedtime + caffeine is the primary sleep disruptor",
+      sleep_debt_7d: "2h 40m",
+      rhr_trend: "rising (+11 bpm vs baseline)",
     },
   },
 ];
 
 export const dashboardBriefing =
-  "Marie, last night was rough — 5h30 of sleep with only 38 minutes of deep sleep (your weekly average was already at 45, well below your 82-minute baseline). Your HRV this morning is 29ms, down from your natural baseline of 45ms. That's a 35% drop over 13 days. Your resting heart rate has been climbing for 8 days straight — it's now 67bpm versus your usual 56. The pattern is clear: your body is accumulating stress faster than it can recover. The good news is you have three days this week where you did cut caffeine after 14h — and on those nights, your deep sleep was noticeably better. That's the lever we're going to pull.";
+  "Last night was rough — **5h30 of sleep**, only **38 minutes of deep sleep** against your 82-minute baseline. **HRV this morning is 29ms**, down **35% in 13 days**. **Resting heart rate** has climbed for 8 straight days and is now **67 bpm** versus your usual 56. Your body is accumulating stress faster than it can recover. The bright spot: the **3 nights you cut caffeine after 14h**, deep sleep was noticeably better. **That's the lever.**";
 
 export const forecastRescuePlan = [
   {
@@ -104,13 +81,13 @@ export const oneThingToday = {
 };
 
 export const weeklyRecap = {
-  headline: "Your most stressful week in months — but the last 3 days show it's turning.",
-  narrative: `This was a hard week, Marie. Sleep dropped to an average of 5h48 — nearly 2 hours below your natural baseline. Your HRV fell to 32ms, and your resting heart rate climbed to 65bpm. On April 6th, you hit what looks like a low point: 35 minutes of deep sleep, HRV at 28ms, 5 wake-ups.
+  headline: "Most stressful week in months — but the last 3 days show it's turning.",
+  narrative: `Hard week. Sleep averaged 5h48 — nearly 2 hours below your baseline. HRV fell to 32ms, resting HR climbed to 65 bpm. April 6th was the low point: 35 min of deep sleep, HRV at 28ms, 5 wake-ups.
 
-But look at the last 3 days. You cut caffeine after 14h twice. You went to bed before midnight twice. Your HRV has ticked up from 28 to 37ms. Your deep sleep last night was 62 minutes — the best in 10 days.
+But the last 3 days are different. Caffeine cut-off at 14h twice. In bed before midnight twice. HRV has ticked up from 28 to 37ms. Deep sleep last night hit 62 minutes — best in 10 days.
 
-Next week: same direction. The goal isn't perfection, it's consistency. If you can string together 5 nights with caffeine cut-off at 14h and lights out by 23h, your HRV should be back above 40ms by next weekend. That's when you'll start feeling the difference in your energy.
+Next week: same direction. String together 5 nights with caffeine cut at 14h and lights out by 23h — HRV should clear 40ms by next weekend. That's when the energy difference becomes noticeable.
 
-One thing to watch: your resting HR is still elevated. If it hasn't started dropping by Wednesday, I'll flag it.`,
+One flag: resting HR is still elevated. If it hasn't started dropping by Wednesday, I'll tell you.`,
   nextWeekGoal: "5 nights: caffeine cut-off 14:00 + lights out 23:00",
 };

@@ -6,9 +6,9 @@ import type {
   WeeklyMetric,
 } from "./types";
 
-// Marie — 31 y/o Product Manager in Paris, narrative arc: good → stress → spiral → partial recovery
+// Amaury — 31 y/o Product Manager in Paris, narrative arc: good → stress → spiral → partial recovery
 export const marie: UserProfile = {
-  name: "Marie",
+  name: "Amaury",
   age: 31,
   job: "Product Manager, Paris startup",
   goals: ["sleep better", "reduce stress", "move more"],
