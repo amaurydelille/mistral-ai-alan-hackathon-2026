@@ -8,11 +8,9 @@ import { useRouter } from "next/navigation";
 
 const SCREENS = [
   { href: "/onboarding", label: "Onboarding", short: "1" },
-  { href: "/dashboard", label: "Dashboard", short: "2" },
-  { href: "/forecast", label: "Forecast", short: "3" },
-  { href: "/what-if", label: "What If", short: "4" },
-  { href: "/one-thing", label: "One Thing", short: "5" },
-  { href: "/recap", label: "Recap", short: "6" },
+  { href: "/overview", label: "Overview", short: "2" },
+  { href: "/what-if", label: "What If", short: "3" },
+  { href: "/one-thing", label: "One Thing", short: "4" },
 ];
 
 export default function Nav() {

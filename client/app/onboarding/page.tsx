@@ -117,7 +117,7 @@ export default function OnboardingPage() {
               <motion.button
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                onClick={() => router.push("/dashboard")}
+                onClick={() => router.push("/overview")}
                 className="rounded-full bg-sage px-8 py-3 text-sm font-semibold text-cream hover:bg-sage-dark transition-colors shadow-lg shadow-sage/25"
               >
                 Import health data →
