@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import clsx from "clsx";
 import type { Goal, GoalMetric, GoalTimeframe } from "@/lib/types";
@@ -12,12 +12,13 @@ interface NewGoalDrawerProps {
   defaultTab?: "suggest" | "manual";
   onClose: () => void;
   onCreated: (goal: Goal) => void;
+  existingGoalTitles?: string[];
 }
 
 const METRIC_LIST = (Object.entries(METRIC_META) as [GoalMetric, typeof METRIC_META[GoalMetric]][])
   .filter(([key]) => key !== "abstract");
 
-export default function NewGoalDrawer({ open, defaultTab = "suggest", onClose, onCreated }: NewGoalDrawerProps) {
+export default function NewGoalDrawer({ open, defaultTab = "suggest", onClose, onCreated, existingGoalTitles }: NewGoalDrawerProps) {
   const [tab, setTab] = useState<"suggest" | "manual">(defaultTab);
   const [suggestions, setSuggestions] = useState<GoalSuggestion[] | null>(null);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
@@ -33,14 +34,35 @@ export default function NewGoalDrawer({ open, defaultTab = "suggest", onClose, o
   const [behavTitle, setBehavTitle] = useState("");
   const [behavDesc, setBehavDesc] = useState("");
 
+  function doFetchSuggestions(existing: string[]) {
+    setLoadingSuggest(true);
+    setSuggestions(null);
+    const url = existing.length
+      ? `/api/goals/suggest?existing=${encodeURIComponent(existing.join("|"))}`
+      : "/api/goals/suggest";
+    fetch(url)
+      .then((r) => r.json())
+      .then((d: GoalSuggestion[]) => { setSuggestions(d); setLoadingSuggest(false); })
+      .catch(() => setLoadingSuggest(false));
+  }
+
+  // Auto-fetch suggestions and reset tab state whenever the drawer opens
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!open) return;
+    setTab(defaultTab);
+    setCreateError(null);
+    if (defaultTab === "suggest") {
+      doFetchSuggestions(existingGoalTitles ?? []);
+    } else {
+      setSuggestions(null);
+    }
+  }, [open]);
+
   function openSuggestTab() {
     setTab("suggest");
     if (!suggestions && !loadingSuggest) {
-      setLoadingSuggest(true);
-      fetch("/api/goals/suggest")
-        .then((r) => r.json())
-        .then((d: GoalSuggestion[]) => { setSuggestions(d); setLoadingSuggest(false); })
-        .catch(() => setLoadingSuggest(false));
+      doFetchSuggestions(existingGoalTitles ?? []);
     }
   }
 

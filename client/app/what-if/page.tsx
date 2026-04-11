@@ -356,7 +356,7 @@ export default function WhatIfPage() {
             suggestions={
               exchanges.length > 0
                 ? ["Why does this matter?", "What about just 1 drink?", "Any tips to offset this?"]
-                : SUGGESTIONS
+                : []
             }
             onSubmit={handleSubmit}
             placeholder={

@@ -111,6 +111,9 @@ export async function GET(request: NextRequest) {
     return Response.json(FALLBACK_SUGGESTIONS);
   }
 
+  const existingRaw = request.nextUrl.searchParams.get("existing") ?? "";
+  const existingGoals = existingRaw ? existingRaw.split("|").filter(Boolean) : [];
+
   const { today, trends7d, trends30d } = health;
   const profile = "profile" in health ? health.profile : marie;
 
@@ -118,7 +121,7 @@ export async function GET(request: NextRequest) {
 Suggest exactly 3 health goals — at least 1 must be a behavioral/abstract goal (not a number target). Respond ONLY with valid JSON.
 
 User's stated goals: ${profile.goals.join(", ")}
-Constraints: ${profile.constraints.join(", ")}
+Constraints: ${profile.constraints.join(", ")}${existingGoals.length ? `\nAlready active goals (do NOT suggest these or anything similar): ${existingGoals.join(", ")}` : ""}
 
 Today's biometrics:
 - Sleep: ${today.sleep.durationMin}min (deep: ${today.sleep.deepMin}min, bed ${today.sleep.bedTime}→${today.sleep.wakeTime})

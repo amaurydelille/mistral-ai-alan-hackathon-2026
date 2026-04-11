@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useRouter } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import PromiseCard from "@/components/PromiseCard";
 import NewGoalDrawer from "@/components/NewGoalDrawer";
 import type { Goal, GoalWithProgress, GoalStatus } from "@/lib/types";
 
 export default function PromisesPage() {
-  const router = useRouter();
   const [goalsData, setGoalsData] = useState<GoalWithProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -270,23 +268,6 @@ export default function PromisesPage() {
           </motion.div>
         )}
 
-        {/* ── Back to dashboard CTA ── */}
-        {!loading && total > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="flex justify-center pt-2"
-          >
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="text-xs text-ink-soft/40 hover:text-ink-soft/70 transition-colors"
-            >
-              ← Back to dashboard
-            </button>
-          </motion.div>
-        )}
-
       </div>
 
       <NewGoalDrawer
@@ -294,6 +275,7 @@ export default function PromisesPage() {
         defaultTab={drawerDefaultTab}
         onClose={() => setDrawerOpen(false)}
         onCreated={handleCreated}
+        existingGoalTitles={goalsData.map((g) => g.goal.title)}
       />
     </PageShell>
   );
