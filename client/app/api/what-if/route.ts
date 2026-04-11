@@ -2,6 +2,14 @@ import type { NextRequest } from "next/server";
 import { fetchDailyData } from "@/lib/thryve";
 import { transformItManager } from "@/lib/thryve-transform";
 import type { HealthData } from "@/lib/thryve-transform";
+import { getDemoIndexFromRequest, getDemoSnapshot } from "@/lib/demo-time";
+import {
+  marie,
+  today as mockToday,
+  last14Days as mockLast14Days,
+  trends7d as mockTrends7d,
+  trends30d as mockTrends30d,
+} from "@/lib/mock-data";
 import {
   buildPrompt,
   normalisedCacheKey,
@@ -18,7 +26,27 @@ export const dynamic = "force-dynamic";
 interface HealthEntry { data: HealthData; expiresAt: number }
 const healthCache = new Map<string, HealthEntry>();
 
-async function getHealthContext(userId: string): Promise<HealthData> {
+async function getHealthContext(req: NextRequest): Promise<HealthData> {
+  // Demo mode: return the virtual-today snapshot for the selected day index
+  const demoIdx = getDemoIndexFromRequest(req);
+  if (demoIdx !== null) {
+    return getDemoSnapshot(demoIdx) as HealthData;
+  }
+
+  const userId = process.env.THRYVE_IT_MANAGER_ID;
+  if (!userId) {
+    // No Thryve credentials — fall back to mock data
+    return {
+      profile: marie,
+      today: mockToday,
+      last14Days: mockLast14Days,
+      trends7d: mockTrends7d,
+      trends30d: mockTrends30d,
+      weeklyMetrics: [],
+      thryveScores: [],
+    };
+  }
+
   const today = new Date().toISOString().split("T")[0];
   const key = `health:${userId}:${today}`;
   const hit = healthCache.get(key);
@@ -100,9 +128,6 @@ async function callMistral(
 interface Body { question: string; history?: HistoryEntry[] }
 
 export async function POST(req: NextRequest) {
-  const userId = process.env.THRYVE_IT_MANAGER_ID;
-  if (!userId) return Response.json({ error: "THRYVE_IT_MANAGER_ID not set" }, { status: 500 });
-
   let body: Body;
   try { body = await req.json() as Body; }
   catch { return Response.json({ error: "Invalid JSON" }, { status: 400 }); }
@@ -110,9 +135,13 @@ export async function POST(req: NextRequest) {
   const { question, history = [] } = body;
   if (!question?.trim()) return Response.json({ error: "question required" }, { status: 400 });
 
+  const demoIdx = getDemoIndexFromRequest(req);
+  const userId = process.env.THRYVE_IT_MANAGER_ID ?? "mock";
+  const cacheUserId = demoIdx !== null ? `demo:${demoIdx}` : userId;
+
   const today = new Date().toISOString().split("T")[0];
   const isStandalone = history.length === 0;
-  const cacheKey = normalisedCacheKey(userId, question, today);
+  const cacheKey = normalisedCacheKey(cacheUserId, question, today);
 
   if (isStandalone) {
     const cached = getResponseCache(cacheKey);
@@ -120,7 +149,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const health = await getHealthContext(userId);
+    const health = await getHealthContext(req);
     const response = await callMistral(question, health, history);
     if (isStandalone) setResponseCache(cacheKey, response);
     return Response.json(response, { headers: { "X-Cache": "MISS" } });

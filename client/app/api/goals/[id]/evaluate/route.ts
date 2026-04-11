@@ -145,6 +145,7 @@ export async function GET(
 
   const goal = rowToGoal(row as Record<string, unknown>);
   const health = await getHealthSnapshot(request);
+  const profile = "profile" in health ? health.profile : marie;
   const last7 = health.last14Days.slice(-7);
 
   let result: GoalProgress;
@@ -173,7 +174,7 @@ export async function GET(
       const shortfall = goal.comparator === "gte"
         ? goal.target - currentValue
         : currentValue - goal.target;
-      const prompt = `You are coaching ${marie.name}, ${marie.age}, ${marie.job}.
+      const prompt = `You are coaching ${profile.name}, ${profile.age}, ${profile.job}.
 They made a promise: "${goal.title}" — ${directionWord} ${goal.target} ${goal.unit} over ${goal.timeframe === "1d" ? "today" : "7 days"}.
 Actual: ${currentValue} ${goal.unit} (${percentComplete}% of target). Status: ${status}.
 ${status === "achieved" ? `They kept their promise.` : `They ${shortfall > 0 ? `are ${Math.round(shortfall)} ${goal.unit} short` : `exceeded the limit by ${Math.round(-shortfall)} ${goal.unit}`}.`}
