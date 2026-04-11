@@ -37,20 +37,6 @@ export default function Home() {
             Skip to overview
           </Link>
         </div>
-
-        {/* Demo persona hint */}
-        <p className="mt-8 text-xs text-ink-soft/40">
-          Demo persona: Amaury, 31 · Product Manager, Paris
-        </p>
-
-        {/* Floating bottom stats */}
-        <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-8 text-xs text-ink-soft/50">
-          <span>← → to navigate between screens</span>
-          <span>·</span>
-          <span>4 demo screens</span>
-          <span>·</span>
-          <span>No network required</span>
-        </div>
       </div>
     </div>
   );

@@ -33,13 +33,15 @@ export default function Nav() {
   }, [pathname, router]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 backdrop-blur-sm bg-cream/80 border-b border-mint-dark/40">
-      <Link href="/" className="font-display text-xl font-semibold tracking-tight text-ink">
-        vital
-        <span className="text-sage">.</span>
-      </Link>
+    <nav className="fixed top-0 left-0 right-0 z-50 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-4 px-8 py-4 backdrop-blur-sm bg-cream/80 border-b border-mint-dark/40">
+      <div className="flex justify-start min-w-0">
+        <Link href="/" className="font-display text-xl font-semibold tracking-tight text-ink shrink-0">
+          vital
+          <span className="text-sage">.</span>
+        </Link>
+      </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center justify-center gap-1 shrink-0">
         {SCREENS.map((screen) => {
           const isActive = pathname.startsWith(screen.href);
           return (
@@ -60,8 +62,10 @@ export default function Nav() {
         })}
       </div>
 
-      <div className="text-xs text-ink-soft/60 font-mono hidden md:block">
-        ← → to navigate
+      <div className="flex justify-end min-w-0">
+        <span className="text-xs text-ink-soft/60 font-mono hidden md:inline text-right">
+          ← → to navigate
+        </span>
       </div>
     </nav>
   );
