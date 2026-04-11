@@ -31,10 +31,10 @@ export default function Home() {
             Start demo →
           </Link>
           <Link
-            href="/dashboard"
+            href="/overview"
             className="rounded-full border border-ink/10 bg-white/60 px-8 py-4 text-base font-medium text-ink-soft hover:border-ink/20 hover:text-ink transition-colors"
           >
-            Skip to dashboard
+            Skip to overview
           </Link>
         </div>
 
@@ -47,7 +47,7 @@ export default function Home() {
         <div className="absolute bottom-12 left-0 right-0 flex justify-center gap-8 text-xs text-ink-soft/50">
           <span>← → to navigate between screens</span>
           <span>·</span>
-          <span>6 demo screens</span>
+          <span>4 demo screens</span>
           <span>·</span>
           <span>No network required</span>
         </div>

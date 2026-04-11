@@ -197,7 +197,6 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-          {/* Input or CTA */}
           <div className="mt-8">
             <AnimatePresence mode="wait">
               {phase === "intro" ? (
@@ -231,7 +230,7 @@ export default function OnboardingPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.6 }}
-                  onClick={() => router.push("/dashboard")}
+                  onClick={() => router.push("/overview")}
                   className="rounded-full bg-sage px-8 py-3 text-sm font-semibold text-cream hover:bg-sage-dark transition-colors shadow-lg shadow-sage/25"
                 >
                   Show me my data →
