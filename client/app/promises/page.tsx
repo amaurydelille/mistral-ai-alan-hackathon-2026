@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import PageShell from "@/components/PageShell";
 import PromiseCard from "@/components/PromiseCard";
 import NewGoalDrawer from "@/components/NewGoalDrawer";
-import type { Goal, GoalWithProgress } from "@/lib/types";
+import type { Goal, GoalWithProgress, GoalStatus } from "@/lib/types";
 
 export default function PromisesPage() {
   const router = useRouter();
@@ -14,9 +14,12 @@ export default function PromisesPage() {
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerDefaultTab, setDrawerDefaultTab] = useState<"suggest" | "manual">("suggest");
+  // Evaluated statuses from /api/goals/{id}/evaluate — single source of truth for summary counts
+  const [evalStatuses, setEvalStatuses] = useState<Record<string, GoalStatus>>({});
 
   const fetchGoals = useCallback(() => {
     setLoading(true);
+    setEvalStatuses({});
     fetch("/api/goals")
       .then((r) => r.json())
       .then((d: GoalWithProgress[]) => {
@@ -30,6 +33,11 @@ export default function PromisesPage() {
     fetchGoals();
   }, [fetchGoals]);
 
+  // Called by each PromiseCard when its evaluate endpoint resolves
+  const handleEvaluated = useCallback((id: string, status: GoalStatus) => {
+    setEvalStatuses((prev) => ({ ...prev, [id]: status }));
+  }, []);
+
   const primaryEntry = goalsData.find((g) => g.goal.isPrimary);
   const otherEntries = goalsData.filter((g) => !g.goal.isPrimary);
   const isEmpty = !loading && goalsData.length === 0;
@@ -41,13 +49,20 @@ export default function PromisesPage() {
   async function handleArchive(id: string) {
     await fetch(`/api/goals/${id}`, { method: "DELETE" });
     setGoalsData((prev) => prev.filter((g) => g.goal.id !== id));
+    setEvalStatuses((prev) => { const n = { ...prev }; delete n[id]; return n; });
   }
 
-  // Summary counts for the header banner
-  const keptCount = goalsData.filter((g) => g.progress.status === "achieved").length;
-  const brokenCount = goalsData.filter((g) => g.progress.status === "off-track").length;
-  const atRiskCount = goalsData.filter((g) => g.progress.status === "at-risk").length;
+  // Summary counts — use evaluated status when available, fall back to basic status.
+  // This ensures the banner always matches what the cards display.
+  const resolvedStatus = (g: GoalWithProgress): GoalStatus =>
+    evalStatuses[g.goal.id] ?? g.progress.status;
+
   const total = goalsData.length;
+  const evalledCount = Object.keys(evalStatuses).length;
+  const allEvalled = total > 0 && evalledCount >= total;
+  const keptCount = goalsData.filter((g) => resolvedStatus(g) === "achieved").length;
+  const brokenCount = goalsData.filter((g) => resolvedStatus(g) === "off-track").length;
+  const atRiskCount = goalsData.filter((g) => resolvedStatus(g) === "at-risk").length;
 
   return (
     <PageShell>
@@ -89,29 +104,45 @@ export default function PromisesPage() {
               transition={{ duration: 0.35, delay: 0.1 }}
               className="rounded-2xl bg-white/60 border border-mint-dark/20 px-5 py-4 flex items-center gap-6"
             >
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-2xl font-display font-bold text-sage">{keptCount}</span>
-                <span className="text-[10px] uppercase tracking-widest text-ink-soft/50">kept</span>
-              </div>
-              <div className="w-px h-8 bg-mint-dark/20" />
-              <div className="flex flex-col items-center gap-0.5">
-                <span className="text-2xl font-display font-bold text-coral">{brokenCount}</span>
-                <span className="text-[10px] uppercase tracking-widest text-ink-soft/50">broken</span>
-              </div>
-              {atRiskCount > 0 && (
+              {/* Counts — shown only once all cards have reported back */}
+              {allEvalled ? (
                 <>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-2xl font-display font-bold text-sage">{keptCount}</span>
+                    <span className="text-[10px] uppercase tracking-widest text-ink-soft/50">kept</span>
+                  </div>
                   <div className="w-px h-8 bg-mint-dark/20" />
                   <div className="flex flex-col items-center gap-0.5">
-                    <span className="text-2xl font-display font-bold text-amber-500">{atRiskCount}</span>
-                    <span className="text-[10px] uppercase tracking-widest text-ink-soft/50">at risk</span>
+                    <span className="text-2xl font-display font-bold text-coral">{brokenCount}</span>
+                    <span className="text-[10px] uppercase tracking-widest text-ink-soft/50">broken</span>
                   </div>
+                  {atRiskCount > 0 && (
+                    <>
+                      <div className="w-px h-8 bg-mint-dark/20" />
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="text-2xl font-display font-bold text-amber-500">{atRiskCount}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-ink-soft/50">at risk</span>
+                      </div>
+                    </>
+                  )}
                 </>
+              ) : (
+                /* Skeleton while evaluations are in-flight */
+                <div className="flex items-center gap-6">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="flex flex-col items-center gap-1.5">
+                      <div className="h-7 w-8 bg-ink/8 rounded-lg animate-pulse" />
+                      <div className="h-2 w-10 bg-ink/6 rounded-full animate-pulse" />
+                    </div>
+                  ))}
+                </div>
               )}
+
               <div className="ml-auto text-right">
                 <p className="text-xs text-ink-soft/50">
                   {total} active {total === 1 ? "promise" : "promises"}
                 </p>
-                {keptCount === total && total > 0 && (
+                {allEvalled && keptCount === total && total > 0 && (
                   <p className="text-xs font-semibold text-sage">Perfect day 🔥</p>
                 )}
               </div>
@@ -182,6 +213,7 @@ export default function PromisesPage() {
               initialValue={primaryEntry.progress.currentValue}
               delay={0.18}
               onArchive={handleArchive}
+              onEvaluated={handleEvaluated}
               hero
             />
           </div>
@@ -208,6 +240,7 @@ export default function PromisesPage() {
                   initialValue={progress.currentValue}
                   delay={0.4 + i * 0.07}
                   onArchive={handleArchive}
+                  onEvaluated={handleEvaluated}
                 />
               ))}
             </div>

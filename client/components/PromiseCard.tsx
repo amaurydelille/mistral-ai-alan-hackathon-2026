@@ -14,6 +14,8 @@ interface PromiseCardProps {
   onArchive?: (id: string) => void;
   /** hero = full-width large treatment for primary promise */
   hero?: boolean;
+  /** called once, when the evaluate endpoint resolves with a real status */
+  onEvaluated?: (id: string, status: GoalStatus) => void;
 }
 
 const STATUS_CFG: Record<
@@ -145,6 +147,7 @@ export default function PromiseCard({
   delay = 0,
   onArchive,
   hero = false,
+  onEvaluated,
 }: PromiseCardProps) {
   const [progress, setProgress] = useState<GoalProgress | null>(null);
   const [evalLoading, setEvalLoading] = useState(true);
@@ -155,8 +158,11 @@ export default function PromiseCard({
       .then((d: GoalProgress) => {
         setProgress(d);
         setEvalLoading(false);
+        onEvaluated?.(goal.id, d.status);
       })
       .catch(() => setEvalLoading(false));
+  // onEvaluated intentionally omitted — stable identity not guaranteed
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [goal.id]);
 
   const status = progress?.status ?? initialStatus;

@@ -184,11 +184,29 @@ export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [promises, setPromises] = useState<GoalWithProgress[]>([]);
+  // Evaluated statuses from /api/goals/{id}/evaluate for the overview widget
+  const [promiseEvalStatuses, setPromiseEvalStatuses] = useState<Record<string, GoalStatus>>({});
 
   useEffect(() => {
     fetch("/api/goals")
       .then((r) => r.json())
-      .then((d: GoalWithProgress[]) => setPromises(Array.isArray(d) ? d : []))
+      .then((d: GoalWithProgress[]) => {
+        if (!Array.isArray(d)) return;
+        setPromises(d);
+        // Fetch all evaluations in parallel — needed for abstract goals which
+        // always start as "on-track" in the basic list but may be "off-track" after Mistral
+        Promise.allSettled(
+          d.map((g) =>
+            fetch(`/api/goals/${g.goal.id}/evaluate`)
+              .then((r) => r.json())
+              .then((ev: { status?: GoalStatus }) => {
+                if (ev.status) {
+                  setPromiseEvalStatuses((prev) => ({ ...prev, [g.goal.id]: ev.status! }));
+                }
+              })
+          )
+        );
+      })
       .catch(() => {});
   }, []);
 
@@ -475,8 +493,10 @@ export default function OverviewPage() {
 
               <div className="rounded-3xl bg-white/80 border border-mint-dark/30 shadow-sm overflow-hidden">
                 {promises.map(({ goal, progress }, i) => {
-                  const cfg = PROMISE_STATUS_STYLE[progress.status];
-                  const verdict = promiseVerdict(goal, progress.currentValue, progress.status);
+                  // Use Mistral-evaluated status when available (abstract goals start as "on-track")
+                  const status = promiseEvalStatuses[goal.id] ?? progress.status;
+                  const cfg = PROMISE_STATUS_STYLE[status];
+                  const verdict = promiseVerdict(goal, progress.currentValue, status);
                   const isLast = i === promises.length - 1;
                   return (
                     <motion.div
@@ -502,7 +522,7 @@ export default function OverviewPage() {
                         "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase",
                         cfg.badge
                       )}>
-                        {PROMISE_BADGE_LABEL[progress.status]}
+                        {PROMISE_BADGE_LABEL[status]}
                       </span>
                     </motion.div>
                   );
