@@ -7,12 +7,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const SCREENS = [
-  { href: "/onboarding", label: "Onboarding", short: "1" },
-  { href: "/dashboard", label: "Dashboard", short: "2" },
-  { href: "/forecast", label: "Forecast", short: "3" },
-  { href: "/what-if", label: "What If", short: "4" },
-  { href: "/one-thing", label: "One Thing", short: "5" },
-  { href: "/recap", label: "Recap", short: "6" },
+  { href: "/onboarding", label: "Onboarding", short: "1", navHref: "/onboarding?reset=1" },
+  { href: "/overview", label: "Overview", short: "2" },
+  { href: "/what-if", label: "What If", short: "3" },
+  { href: "/promises", label: "Promises", short: "4" },
 ];
 
 export default function Nav() {
@@ -47,7 +45,7 @@ export default function Nav() {
           return (
             <Link
               key={screen.href}
-              href={screen.href}
+              href={"navHref" in screen ? screen.navHref! : screen.href}
               className={clsx(
                 "relative px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
                 isActive

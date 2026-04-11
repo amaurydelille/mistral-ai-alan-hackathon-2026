@@ -6,9 +6,9 @@ import type {
   WeeklyMetric,
 } from "./types";
 
-// Marie — 31 y/o Product Manager in Paris, narrative arc: good → stress → spiral → partial recovery
+// Amaury — 31 y/o Product Manager in Paris, narrative arc: good → stress → spiral → partial recovery
 export const marie: UserProfile = {
-  name: "Marie",
+  name: "Amaury",
   age: 31,
   job: "Product Manager, Paris startup",
   goals: ["sleep better", "reduce stress", "move more"],
@@ -143,14 +143,7 @@ export const last14Days: DayData[] = [
     activity: { steps: 5600, activeMin: 28, sedentaryHours: 10, workouts: ["walk 30min"] },
     selfReported: { stress: 3, energy: 3, mood: 3, caffeine: "2 coffees (8h, 13h)", alcohol: "none", meals: "3 meals, no late eating", screenBeforeBed: false, notes: "feeling slightly better" },
   },
-  {
-    date: "2026-04-10",
-    sleep: { durationMin: 390, bedTime: "23:30", wakeTime: "06:00", deepMin: 62, remMin: 74, lightMin: 228, awakeMin: 28, efficiency: 0.88, wakeUps: 2 },
-    heart: { restingHr: 62, hrvMs: 37 },
-    activity: { steps: 6200, activeMin: 35, sedentaryHours: 9, workouts: ["yoga 20min"] },
-    selfReported: { stress: 3, energy: 3, mood: 4, caffeine: "1 coffee (8h)", alcohol: "none", meals: "healthy all day", screenBeforeBed: false, notes: "no caffeine after 14h!" },
-  },
-  // Yesterday — one relapse
+  // Yesterday — relapse under launch pressure
   {
     date: "2026-04-10",
     sleep: { durationMin: 354, bedTime: "00:45", wakeTime: "06:39", deepMin: 44, remMin: 60, lightMin: 220, awakeMin: 40, efficiency: 0.82, wakeUps: 3 },

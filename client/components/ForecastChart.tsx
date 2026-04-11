@@ -3,12 +3,17 @@
 import { motion } from "motion/react";
 
 interface ForecastChartProps {
-  /** Smoothed composite scores for the last N days (typically 7). */
+  /** Smoothed scores for the last N days (typically 7). */
   historical: number[];
-  /** Projected composite scores for next 3 days. */
+  /** Projected scores for next 3 days. */
   projected: number[];
   /** ISO date strings for the historical x-axis labels. */
   historicalDates?: string[];
+  /**
+   * When true the scale is inverted: high value = good (wellness).
+   * Coloring and zone fills flip accordingly.
+   */
+  inverted?: boolean;
   className?: string;
 }
 
@@ -41,16 +46,22 @@ function pointsToPath(pts: [number, number][]): string {
   }, "");
 }
 
-function riskColor(value: number): string {
-  if (value >= HIGH_Y) return "#D86849";     // coral
+function riskColor(value: number, inverted = false): string {
+  if (inverted) {
+    if (value >= HIGH_Y) return "#1A6B4A";   // sage — high wellness
+    if (value >= MODERATE_Y) return "#E8A04B"; // amber — moderate
+    return "#D86849";                          // coral — low wellness
+  }
+  if (value >= HIGH_Y) return "#D86849";     // coral — high risk
   if (value >= MODERATE_Y) return "#E8A04B"; // amber
-  return "#1A6B4A";                           // sage
+  return "#1A6B4A";                           // sage — low risk
 }
 
 export default function ForecastChart({
   historical,
   projected,
   historicalDates = [],
+  inverted = false,
   className,
 }: ForecastChartProps) {
   const allValues = [...historical, ...projected];
@@ -113,24 +124,24 @@ export default function ForecastChart({
           </clipPath>
         </defs>
 
-        {/* ── Risk zone fills ─────────────────────────────────────────── */}
-        {/* Green zone: 0-40 */}
+        {/* ── Zone fills — flip meaning when inverted (wellness) ───────── */}
+        {/* Bottom zone: 0-40 */}
         <rect
           x={PAD.left} y={moderateLineY}
           width={CHART_W} height={PAD.top + CHART_H - moderateLineY}
-          fill="#D8EDE2" opacity={0.25}
+          fill={inverted ? "#FCEEE9" : "#D8EDE2"} opacity={inverted ? 0.4 : 0.25}
         />
-        {/* Amber zone: 40-65 */}
+        {/* Middle zone: 40-65 */}
         <rect
           x={PAD.left} y={highLineY}
           width={CHART_W} height={moderateLineY - highLineY}
           fill="#FDF3E3" opacity={0.4}
         />
-        {/* Red zone: 65-100 */}
+        {/* Top zone: 65-100 */}
         <rect
           x={PAD.left} y={PAD.top}
           width={CHART_W} height={highLineY - PAD.top}
-          fill="#FCEEE9" opacity={0.4}
+          fill={inverted ? "#D8EDE2" : "#FCEEE9"} opacity={0.4}
         />
 
         {/* ── Threshold lines ──────────────────────────────────────────── */}
@@ -171,7 +182,7 @@ export default function ForecastChart({
         {/* ── Projected line (dashed, color-coded to final risk) ───────── */}
         <motion.path
           d={projPath}
-          stroke={riskColor(projected[projected.length - 1] ?? 50)}
+          stroke={riskColor(projected[projected.length - 1] ?? 50, inverted)}
           strokeWidth={2}
           fill="none"
           strokeLinecap="round"
@@ -188,7 +199,7 @@ export default function ForecastChart({
             <motion.circle
               key={`h-${i}`}
               cx={x} cy={y} r={3}
-              fill={riskColor(val)}
+              fill={riskColor(val, inverted)}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.05 * i, duration: 0.25 }}
@@ -203,7 +214,7 @@ export default function ForecastChart({
             <motion.circle
               key={`p-${i}`}
               cx={x} cy={y} r={5}
-              fill={riskColor(val)}
+              fill={riskColor(val, inverted)}
               stroke="white"
               strokeWidth={2}
               initial={{ scale: 0, opacity: 0 }}
@@ -225,7 +236,7 @@ export default function ForecastChart({
         })}
         {/* Projected labels */}
         {projLabelPoints.map(([x], i) => (
-          <text key={`proj-lbl-${i}`} x={x} y={H - 4} textAnchor="middle" fontSize={9} fill={riskColor(projected[i])} fontFamily="monospace" fontWeight="600">
+          <text key={`proj-lbl-${i}`} x={x} y={H - 4} textAnchor="middle" fontSize={9} fill={riskColor(projected[i], inverted)} fontFamily="monospace" fontWeight="600">
             {projLabels[i]}
           </text>
         ))}
