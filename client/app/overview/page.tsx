@@ -9,7 +9,6 @@ import ForecastBadge from "@/components/ForecastBadge";
 import ForecastChart from "@/components/ForecastChart";
 import InsightCard from "@/components/InsightCard";
 import LiveBadge from "@/components/LiveBadge";
-import SignalChip from "@/components/SignalChip";
 import CoachMessage from "@/components/CoachMessage";
 import Link from "next/link";
 import type {
@@ -368,6 +367,13 @@ export default function OverviewPage() {
                 ].filter(Boolean).join(" · ") || `${today.activity.steps.toLocaleString()} steps`}
                 delay={0.35}
               />
+              <MetricCard
+                label="Sleep debt (7d)"
+                value={`${sleepDebtH}h ${String(sleepDebtM).padStart(2, "0")}m`}
+                unit=""
+                note={sleepDebtMin > 300 ? "High — prioritise recovery" : sleepDebtMin > 120 ? "Moderate accumulation" : "Within healthy range"}
+                delay={0.4}
+              />
             </div>
           </div>
         </section>
@@ -430,46 +436,7 @@ export default function OverviewPage() {
         <section aria-labelledby="overview-context-heading" className="space-y-6">
           <SectionHeading eyebrow="Signals & history" title="Context" id="overview-context-heading" />
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.75 }}
-          >
-            <p className="text-[10px] font-medium uppercase tracking-widest text-ink-soft/40 mb-3">
-              Current signals
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <SignalChip
-                label="Recovery score"
-                value={100 - currentScores.sickLeave}
-                unit="/100"
-                level={currentScores.sickLeave >= 65 ? "alert" : currentScores.sickLeave >= 40 ? "warn" : "ok"}
-                delay={0.78}
-              />
-              <SignalChip
-                label="Sleep score"
-                value={100 - currentScores.insomniaRisk}
-                unit="/100"
-                level={currentScores.insomniaRisk >= 65 ? "alert" : currentScores.insomniaRisk >= 40 ? "warn" : "ok"}
-                delay={0.82}
-              />
-              <SignalChip
-                label="Mental score"
-                value={100 - currentScores.mentalHealthRisk}
-                unit="/100"
-                level={currentScores.mentalHealthRisk >= 65 ? "alert" : currentScores.mentalHealthRisk >= 40 ? "warn" : "ok"}
-                delay={0.86}
-              />
-              <SignalChip
-                label="Sleep debt (7d)"
-                value={`${sleepDebtH}h ${String(sleepDebtM).padStart(2, "0")}m`}
-                level={sleepDebtMin > 300 ? "alert" : sleepDebtMin > 120 ? "warn" : "ok"}
-                delay={0.9}
-              />
-            </div>
-          </motion.div>
-
-          {(insights.length > 0 || strokeRisk > 10) && (
+{(insights.length > 0 || strokeRisk > 10) && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}>
               <p className="text-[10px] font-medium uppercase tracking-widest text-ink-soft/40 mb-3">
                 What your body is telling you
