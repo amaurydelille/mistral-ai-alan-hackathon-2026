@@ -6,7 +6,7 @@ import clsx from "clsx";
 import PageShell from "@/components/PageShell";
 import ForecastBadge from "@/components/ForecastBadge";
 import ForecastChart from "@/components/ForecastChart";
-import type { ForecastResponse } from "@/lib/types";
+import type { ForecastResponse, ForecastInsight } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Skeleton
@@ -38,6 +38,38 @@ function ForecastSkeleton() {
       <Skeleton className="h-44 w-full rounded-3xl" />
       <Skeleton className="h-40 w-full rounded-3xl" />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Insight card
+// ---------------------------------------------------------------------------
+
+function InsightCard({ insight, delay }: { insight: ForecastInsight; delay: number }) {
+  const colors = {
+    alert: { border: "border-coral/20", bg: "bg-coral-light", dot: "bg-coral", value: "text-coral", text: "text-ink" },
+    warn:  { border: "border-amber/20", bg: "bg-amber-light", dot: "bg-amber", value: "text-amber", text: "text-ink" },
+    ok:    { border: "border-mint-dark/30", bg: "bg-mint",    dot: "bg-sage",  value: "text-sage",  text: "text-ink" },
+  }[insight.level];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.3 }}
+      className={clsx("rounded-2xl border px-5 py-4 flex gap-4", colors.bg, colors.border)}
+    >
+      <div className={clsx("w-2 h-2 rounded-full mt-1.5 shrink-0", colors.dot)} />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline justify-between gap-3 mb-1">
+          <p className="text-sm font-semibold text-ink">{insight.title}</p>
+          <span className={clsx("text-xs font-mono font-semibold shrink-0", colors.value)}>
+            {insight.value}
+          </span>
+        </div>
+        <p className="text-xs text-ink leading-relaxed">{insight.description}</p>
+      </div>
+    </motion.div>
   );
 }
 
@@ -138,7 +170,7 @@ export default function ForecastPage() {
   }
 
   const { forecast, rescuePlan, computed } = data;
-  const { currentScores, sleepDebtMin, historicalComposites, historicalDates, dataSource } = computed;
+  const { currentScores, sleepDebtMin, historicalComposites, historicalDates, dataSource, insights = [] } = computed;
   const projectedComposites = forecast.map((d) => 100 - (d.composite ?? 50));
   const wellnessHistorical = historicalComposites.map((c) => 100 - c);
 
@@ -186,7 +218,26 @@ export default function ForecastPage() {
           ))}
         </div>
 
-        {/* ── Rescue plan — immediately below cards ───────────────────── */}
+        {/* ── Insights — what's driving the forecast ──────────────────── */}
+        {insights.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mb-8"
+          >
+            <p className="text-[10px] font-medium uppercase tracking-widest text-ink-soft/40 mb-3">
+              What your body is telling you
+            </p>
+            <div className="flex flex-col gap-3">
+              {insights.map((ins, i) => (
+                <InsightCard key={ins.id} insight={ins} delay={0.32 + i * 0.06} />
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── Rescue plan — immediately below insights ────────────────── */}
         {rescuePlan.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -313,9 +364,9 @@ export default function ForecastPage() {
           <p className="text-[11px] text-ink-soft/50 leading-relaxed">
             <span className="font-semibold text-ink-soft/70">How this works —</span>{" "}
             Thryve&#39;s ML models compute daily sick-leave, insomnia, and mental-health risk scores from
-            your wearable data. EWMA smoothing (α=0.3) removes day-to-day noise, then velocity +
-            dampened acceleration projects 3 days forward — no naive linear extrapolation.
-            Mistral generates the narrative from the computed numbers.
+            your wearable data. Outliers are Winsorised before EWMA smoothing (α=0.3) removes day-to-day
+            noise. The projection adds a bias from sleep debt, consecutive short nights, and RHR elevation —
+            signals that pure trend extrapolation misses.
             {dataSource === "biometric-proxy" && " Thryve prediction scores unavailable — biometric proxy used."}
           </p>
         </motion.div>
