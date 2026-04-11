@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { fetchDailyData } from "@/lib/thryve";
 import { transformItManager } from "@/lib/thryve-transform";
 import { computeForecast, countConsecutiveBadNights, bedtimeConsistencyMin, rhrElevation } from "@/lib/forecast";
+import { getDemoIndexFromRequest, getDemoSnapshot } from "@/lib/demo-time";
 import type { ForecastDay, RescuePlanStep, ForecastResponse } from "@/lib/types";
 import type { ComputedForecastDay } from "@/lib/forecast";
 
@@ -164,22 +165,63 @@ Rules: be specific and data-driven, reference actual numbers, no hedging, no gen
 // Route handler
 // ---------------------------------------------------------------------------
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   const endUserId = process.env.THRYVE_IT_MANAGER_ID;
-  if (!endUserId) {
-    return Response.json({ error: "THRYVE_IT_MANAGER_ID not configured" }, { status: 500 });
-  }
+  const demoIdx = getDemoIndexFromRequest(request);
 
   const today = new Date();
   const todayStr = today.toISOString().split("T")[0];
 
-  // Cache key scoped to user + calendar date so it auto-invalidates at midnight.
-  const cacheKey = `${endUserId}:${todayStr}`;
+  const cacheKey = demoIdx !== null ? `demo:${demoIdx}` : `${endUserId}:${todayStr}`;
   const cached = getCached(cacheKey);
   if (cached) {
-    return Response.json(cached, {
-      headers: { "X-Cache": "HIT" },
+    return Response.json(cached, { headers: { "X-Cache": "HIT" } });
+  }
+
+  if (demoIdx !== null) {
+    // Demo mode — compute forecast from mock snapshot
+    const snap = getDemoSnapshot(demoIdx);
+    const computed = computeForecast([], snap.last14Days, snap.trends7d, snap.trends30d);
+    const forecastDays: ForecastDay[] = computed.days.map((d) => ({
+      date: d.date, label: d.label, risk: d.risk,
+      reason: "", composite: d.composite, sickLeave: d.sickLeave,
+      insomniaRisk: d.insomniaRisk, mentalHealthRisk: d.mentalHealthRisk,
+    }));
+    const avgSleep30d = snap.trends30d.avgSleepDuration || snap.trends7d.avgSleepDuration;
+    const streak = countConsecutiveBadNights(snap.last14Days, avgSleep30d);
+    const bedtimeVarianceMin = bedtimeConsistencyMin(snap.last14Days.map((d) => d.sleep.bedTime));
+    const rhrElevationBpm = rhrElevation(snap.trends7d.avgRhr, snap.trends30d.avgRhr);
+    const narrative = await generateNarrative(computed.days, {
+      avgRhr: snap.trends7d.avgRhr, rhrTrend: snap.trends7d.rhrTrend,
+      avgSleepMin: snap.trends7d.avgSleepDuration, deepSleepTrend: snap.trends7d.deepSleepTrend,
+      sleepDebtMin: computed.sleepDebtMin,
+      currentSickLeave: computed.currentScores.sickLeave,
+      currentInsomnia: computed.currentScores.insomniaRisk,
+      currentMentalHealth: computed.currentScores.mentalHealthRisk,
+      consecutiveBadNights: streak,
+      bedtimeVarianceMin,
+      rhrElevationBpm,
+      projectionBias: computed.projectionBias,
     });
+    const forecastDaysWithReasons = forecastDays.map((d, i) => ({ ...d, reason: narrative.reasons[i] ?? "" }));
+    const result: ForecastResponse = {
+      forecast: forecastDaysWithReasons,
+      rescuePlan: narrative.rescuePlan,
+      computed: {
+        currentScores: computed.currentScores,
+        sleepDebtMin: computed.sleepDebtMin,
+        historicalComposites: computed.historicalComposites,
+        historicalDates: computed.historicalDates,
+        dataSource: computed.dataSource,
+        insights: computed.insights,
+      },
+    };
+    setCache(cacheKey, result);
+    return Response.json(result, { headers: { "X-Cache": "MISS" } });
+  }
+
+  if (!endUserId) {
+    return Response.json({ error: "THRYVE_IT_MANAGER_ID not configured" }, { status: 500 });
   }
 
   const endDay = todayStr;

@@ -112,10 +112,105 @@ export interface ForecastResponse {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Goals
+// ---------------------------------------------------------------------------
+
+export type GoalMetric =
+  | "sleep_duration_min"
+  | "deep_sleep_min"
+  | "steps"
+  | "active_min"
+  | "resting_hr"
+  | "sedentary_hours"
+  | "avg_stress"
+  | "abstract";
+
+export type GoalType = "metric" | "abstract";
+
+export type GoalTimeframe = "1d" | "7d";
+export type GoalSource = "ai" | "user";
+export type GoalStatus = "achieved" | "on-track" | "at-risk" | "off-track";
+export type GoalSentiment = "encouragement" | "warning";
+
+export interface Goal {
+  id: string;
+  title: string;
+  goalType: GoalType;
+  /** Free-form description for abstract goals (e.g. "No caffeine after 4pm") */
+  description: string | null;
+  metric: GoalMetric;
+  comparator: "gte" | "lte";
+  target: number;
+  unit: string;
+  timeframe: GoalTimeframe;
+  source: GoalSource;
+  rationale: string | null;
+  isPrimary: boolean;
+  createdAt: string;
+  archivedAt: string | null;
+}
+
+export interface GoalProgress {
+  goalId: string;
+  currentValue: number;
+  percentComplete: number;
+  status: GoalStatus;
+  sentiment: GoalSentiment;
+  message: string;
+  evaluatedAt: string;
+}
+
+export interface GoalWithProgress {
+  goal: Goal;
+  progress: Omit<GoalProgress, "message" | "sentiment" | "evaluatedAt">;
+}
+
 export interface WeeklyMetric {
   label: string;
   value: string;
   unit: string;
   delta: number;
   deltaLabel: string;
+}
+
+export interface DailyBriefingResponse {
+  date: string;
+  today: {
+    sleepDurationMin: number;
+    deepSleepMin: number;
+    sleepEfficiency: number;
+    bedTime: string;
+    wakeTime: string;
+    restingHr: number;
+    steps: number;
+    activeMin: number;
+    stress?: number;
+    energy?: number;
+    mood?: number;
+  };
+  past: {
+    yesterday: {
+      sleepDurationMin: number;
+      deepSleepMin: number;
+      restingHr: number;
+      steps: number;
+    };
+    sevenDay: {
+      avgSleepMin: number;
+      avgDeepSleepMin: number;
+      avgRhr: number;
+      avgSteps: number;
+      avgStress: number;
+    };
+    sleepDebt7dMin: number;
+  };
+  todayRisk: {
+    level: RiskLevel;
+    composite: number;
+    reason: string;
+  };
+  narrative: string;
+  topInsight: string;
+  actionTip: string;
 }

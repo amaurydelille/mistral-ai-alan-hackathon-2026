@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { unstable_cache } from "next/cache";
 import { fetchDailyData } from "@/lib/thryve";
 import { transformItManager } from "@/lib/thryve-transform";
+import { getDemoIndexFromRequest, getDemoSnapshot } from "@/lib/demo-time";
 
 function subtractDays(date: Date, days: number): string {
   const d = new Date(date);
@@ -19,6 +20,12 @@ const getCachedHealth = unstable_cache(
 );
 
 export async function GET(request: NextRequest) {
+  // Demo mode: bypass Thryve, return mock slice for the given day index
+  const demoIdx = getDemoIndexFromRequest(request);
+  if (demoIdx !== null) {
+    return Response.json(getDemoSnapshot(demoIdx));
+  }
+
   const endUserId = process.env.THRYVE_IT_MANAGER_ID;
   if (!endUserId) {
     return Response.json({ error: "THRYVE_IT_MANAGER_ID not configured" }, { status: 500 });
