@@ -70,39 +70,49 @@ export default function DemoTimeControl() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, x: 16 }}
+        animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.6, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+        className="fixed right-2 top-1/2 -translate-y-1/2 z-50 w-[4.75rem]"
       >
         {inDemoMode && currentDay ? (
           /* ── Active demo controls ── */
-          <div className="flex items-center gap-3 rounded-2xl bg-ink/90 backdrop-blur-sm border border-white/10 shadow-2xl px-4 py-2.5">
-            {/* Prev */}
-            <button
-              onClick={() => setIndex(demoIdx - 1)}
-              disabled={demoIdx <= DEMO_START_IDX}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-              title="Previous day"
-            >
-              ←
-            </button>
-
+          <div className="flex flex-col items-center gap-1 rounded-lg bg-ink/90 backdrop-blur-sm border border-white/10 shadow-lg px-1.5 py-1.5">
             {/* Date + phase */}
-            <div className="flex flex-col items-center min-w-[90px]">
-              <span className="text-[10px] font-medium uppercase tracking-widest text-white/40 leading-none mb-0.5">
-                Demo · day {position}/{total}
+            <div className="flex flex-col items-center min-w-0 text-center w-full">
+              <span className="text-[8px] font-medium uppercase tracking-wide text-white/40 leading-none">
+                {position}/{total}
               </span>
-              <span className="text-sm font-semibold text-white leading-none">
+              <span className="text-[10px] font-semibold text-white leading-tight mt-0.5">
                 {formatDemoDate(currentDay.date)}
               </span>
-              <span className={`text-[10px] font-medium mt-0.5 leading-none ${phaseColor}`}>
-                {phase} phase
+              <span className={`text-[8px] font-medium mt-px leading-none ${phaseColor}`}>
+                {phase}
               </span>
             </div>
 
+            {/* Prev / Next */}
+            <div className="flex items-center justify-center gap-0.5">
+              <button
+                onClick={() => setIndex(demoIdx - 1)}
+                disabled={demoIdx <= DEMO_START_IDX}
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white/55 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+                title="Previous day"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setIndex(demoIdx + 1)}
+                disabled={demoIdx >= DEMO_END_IDX}
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] text-white/55 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+                title="Next day"
+              >
+                →
+              </button>
+            </div>
+
             {/* Progress pips */}
-            <div className="flex gap-1">
+            <div className="flex flex-wrap justify-center gap-px max-w-full px-0.5">
               {Array.from({ length: total }).map((_, i) => {
                 const absIdx = DEMO_START_IDX + i;
                 const dayPhase = getDayLabel(absIdx);
@@ -114,31 +124,20 @@ export default function DemoTimeControl() {
                     key={i}
                     onClick={() => setIndex(absIdx)}
                     title={formatDemoDate(DEMO_ALL_DAYS[absIdx].date)}
-                    className={`h-1.5 rounded-full transition-all ${
+                    className={`h-1 rounded-full transition-all ${
                       absIdx === demoIdx
-                        ? `w-4 ${pipColor} opacity-100`
-                        : `w-1.5 ${pipColor} opacity-30 hover:opacity-60`
+                        ? `w-2.5 ${pipColor} opacity-100`
+                        : `w-1 ${pipColor} opacity-30 hover:opacity-60`
                     }`}
                   />
                 );
               })}
             </div>
 
-            {/* Next */}
-            <button
-              onClick={() => setIndex(demoIdx + 1)}
-              disabled={demoIdx >= DEMO_END_IDX}
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-all disabled:opacity-20 disabled:cursor-not-allowed"
-              title="Next day"
-            >
-              →
-            </button>
-
-            {/* Exit */}
-            <div className="w-px h-4 bg-white/10" />
+            <div className="w-full h-px bg-white/10" />
             <button
               onClick={exitDemo}
-              className="text-[10px] text-white/30 hover:text-white/60 transition-colors"
+              className="text-[8px] leading-none py-0.5 text-white/35 hover:text-white/55 transition-colors"
               title="Exit demo mode"
             >
               ✕
@@ -146,17 +145,17 @@ export default function DemoTimeControl() {
           </div>
         ) : (
           /* ── Start demo button ── */
-          <div className="flex items-center rounded-2xl bg-ink/80 backdrop-blur-sm border border-white/10 shadow-xl overflow-hidden">
+          <div className="flex flex-col rounded-lg bg-ink/80 backdrop-blur-sm border border-white/10 shadow-lg overflow-hidden">
             <button
               onClick={startDemo}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition-all"
+              className="flex flex-col items-center gap-0 px-1.5 py-1 text-[9px] font-medium text-white/55 hover:text-white hover:bg-white/5 transition-all leading-tight"
             >
-              <span className="text-[10px] font-medium uppercase tracking-widest text-sage">▶</span>
-              Start demo
+              <span className="text-[8px] text-sage">▶</span>
+              <span className="uppercase tracking-wide">Demo</span>
             </button>
             <button
               onClick={() => setVisible(false)}
-              className="px-2 py-2.5 text-white/30 hover:text-white/60 text-[10px] transition-colors border-l border-white/10"
+              className="py-0.5 text-white/30 hover:text-white/55 text-[8px] transition-colors border-t border-white/10"
               title="Dismiss"
             >
               ✕
