@@ -13,12 +13,13 @@ interface NewGoalDrawerProps {
   onClose: () => void;
   onCreated: (goal: Goal) => void;
   existingGoalTitles?: string[];
+  prefillAbstract?: { title: string; description?: string };
 }
 
 const METRIC_LIST = (Object.entries(METRIC_META) as [GoalMetric, typeof METRIC_META[GoalMetric]][])
   .filter(([key]) => key !== "abstract");
 
-export default function NewGoalDrawer({ open, defaultTab = "suggest", onClose, onCreated, existingGoalTitles }: NewGoalDrawerProps) {
+export default function NewGoalDrawer({ open, defaultTab = "suggest", onClose, onCreated, existingGoalTitles, prefillAbstract }: NewGoalDrawerProps) {
   const [tab, setTab] = useState<"suggest" | "manual">(defaultTab);
   const [suggestions, setSuggestions] = useState<GoalSuggestion[] | null>(null);
   const [loadingSuggest, setLoadingSuggest] = useState(false);
@@ -52,6 +53,14 @@ export default function NewGoalDrawer({ open, defaultTab = "suggest", onClose, o
     if (!open) return;
     setTab(defaultTab);
     setCreateError(null);
+    if (prefillAbstract) {
+      setManualType("abstract");
+      setBehavTitle(prefillAbstract.title);
+      setBehavDesc(prefillAbstract.description ?? "");
+    } else {
+      setBehavTitle("");
+      setBehavDesc("");
+    }
     if (defaultTab === "suggest") {
       doFetchSuggestions(existingGoalTitles ?? []);
     } else {

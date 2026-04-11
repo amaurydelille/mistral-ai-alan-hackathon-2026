@@ -17,6 +17,7 @@ import { getDemoIndexFromRequest, getDemoSnapshot } from "@/lib/demo-time";
 import { generateBriefingNarrative, buildRiskReason } from "@/lib/mistral/briefing";
 import { generateForecastNarrative } from "@/lib/mistral/forecast";
 import { generateAlertHeadline } from "@/lib/mistral/alert";
+import { supabase } from "@/lib/supabase";
 import type { ThryveScore } from "@/lib/thryve-transform";
 import type {
   DayData,
@@ -110,8 +111,24 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const todayStr = now.toISOString().split("T")[0];
 
+  // Fetch active promise titles — used to personalise the rescue plan prompt
+  // and as part of the cache key so adding/removing a promise busts the cache.
+  let activePromiseTitles: string[] = [];
+  try {
+    const { data: goalsData } = await supabase
+      .from("goals")
+      .select("title")
+      .is("archived_at", null);
+    activePromiseTitles = (goalsData ?? []).map((r: { title: string }) => r.title);
+  } catch {
+    // non-fatal — proceed without promise context
+  }
+
+  const promisesKey = activePromiseTitles.sort().join("|");
   const cacheKey =
-    demoIdx !== null ? `demo:${demoIdx}` : `${endUserId ?? "mock"}:${todayStr}`;
+    demoIdx !== null
+      ? `demo:${demoIdx}:${promisesKey}`
+      : `${endUserId ?? "mock"}:${todayStr}:${promisesKey}`;
 
   const cached = getCached(cacheKey);
   if (cached) {
@@ -233,6 +250,7 @@ export async function GET(request: NextRequest) {
       bedtimeVarianceMin,
       rhrElevationBpm,
       projectionBias: computed.projectionBias,
+      activePromises: activePromiseTitles,
     }),
   ]);
 

@@ -10,6 +10,7 @@ import ForecastChart from "@/components/ForecastChart";
 import InsightCard from "@/components/InsightCard";
 import LiveBadge from "@/components/LiveBadge";
 import CoachMessage from "@/components/CoachMessage";
+import NewGoalDrawer from "@/components/NewGoalDrawer";
 import Link from "next/link";
 import type {
   DayData,
@@ -186,6 +187,8 @@ export default function OverviewPage() {
   const [promises, setPromises] = useState<GoalWithProgress[]>([]);
   // Evaluated statuses from /api/goals/{id}/evaluate for the overview widget
   const [promiseEvalStatuses, setPromiseEvalStatuses] = useState<Record<string, GoalStatus>>({});
+  const [promiseDrawerOpen, setPromiseDrawerOpen] = useState(false);
+  const [promisePrefill, setPromisePrefill] = useState<{ title: string; description: string } | undefined>();
 
   useEffect(() => {
     fetch("/api/goals")
@@ -410,6 +413,15 @@ export default function OverviewPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-ink mb-0.5">{item.action}</p>
                       <p className="text-xs text-ink-soft leading-relaxed">{item.why}</p>
+                      <button
+                        onClick={() => {
+                          setPromisePrefill({ title: item.action, description: item.why });
+                          setPromiseDrawerOpen(true);
+                        }}
+                        className="mt-1.5 text-[11px] font-medium text-sage hover:text-sage-dark transition-colors"
+                      >
+                        + Make a promise →
+                      </button>
                     </div>
                   </motion.div>
                 ))}
@@ -588,6 +600,14 @@ export default function OverviewPage() {
           <span className="sm:text-right">Prevention over treatment · Powered by Mistral × Alan × Thryve</span>
         </div>
       </div>
+      <NewGoalDrawer
+        open={promiseDrawerOpen}
+        defaultTab="manual"
+        prefillAbstract={promisePrefill}
+        onClose={() => setPromiseDrawerOpen(false)}
+        onCreated={() => setPromiseDrawerOpen(false)}
+        existingGoalTitles={promises.map((g) => g.goal.title)}
+      />
     </PageShell>
   );
 }

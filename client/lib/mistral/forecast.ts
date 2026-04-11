@@ -17,6 +17,8 @@ export interface ForecastNarrativeContext {
   bedtimeVarianceMin: number;
   rhrElevationBpm: number;
   projectionBias: number;
+  /** Active promise titles — rescue plan avoids duplicating these */
+  activePromises?: string[];
 }
 
 export interface ForecastNarrativeResult {
@@ -58,6 +60,11 @@ export async function generateForecastNarrative(
   const sleepDebtHours = `${Math.floor(ctx.sleepDebtMin / 60)}h ${ctx.sleepDebtMin % 60}m`;
   const avgSleepHours = `${Math.floor(ctx.avgSleepMin / 60)}h ${ctx.avgSleepMin % 60}m`;
 
+  const activePromisesBlock =
+    ctx.activePromises && ctx.activePromises.length > 0
+      ? `\nUser's active promises (already committed — do NOT duplicate as rescue steps; acknowledge them as covered if relevant):\n${ctx.activePromises.map((p) => `- ${p}`).join("\n")}\n`
+      : "";
+
   const prompt = `You are a precise health coach. Respond ONLY with valid JSON.
 
 Biometric context (last 7 days):
@@ -69,7 +76,7 @@ Biometric context (last 7 days):
 - Thryve sick-leave risk: ${ctx.currentSickLeave}/100
 - Thryve insomnia risk: ${ctx.currentInsomnia}/100
 - Thryve mental-health risk: ${ctx.currentMentalHealth}/100
-
+${activePromisesBlock}
 3-day forecast (computed via EWMA + projection):
 ${days.map((d, i) => `Day ${i + 1} — ${d.label}: composite ${d.composite}/100 (${d.risk.toUpperCase()}). Sick leave: ${d.sickLeave}, Insomnia: ${d.insomniaRisk}, Mental: ${d.mentalHealthRisk}`).join("\n")}
 
@@ -89,7 +96,7 @@ Return this exact JSON structure:
   ]
 }
 
-Rules: be specific and data-driven, reference actual numbers, no hedging, no generic advice.`;
+Rules: be specific and data-driven, reference actual numbers, no hedging, no generic advice. If all 3 rescue steps would duplicate existing promises, propose complementary actions instead.`;
 
   try {
     const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
