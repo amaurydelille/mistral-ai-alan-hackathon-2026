@@ -1,4 +1,4 @@
-import { last14Days, today, marie, trends30d } from "./mock-data";
+import { last14Days, today, marie, trends30d, weeklyMetrics } from "./mock-data";
 import type { DayData, Trends } from "./types";
 
 // Full timeline: 14 history days + today = 15 data points
@@ -69,6 +69,7 @@ export function getDemoSnapshot(idx: number) {
     last14Days: virtualLast14,
     trends7d: computeTrends(virtualLast7),
     trends30d,
+    weeklyMetrics,
     thryveScores: [],
   };
 }
