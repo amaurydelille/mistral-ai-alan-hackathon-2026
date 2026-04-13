@@ -25,7 +25,7 @@ export default function Home() {
         {/* CTA */}
         <div className="flex items-center gap-4">
           <Link
-            href="/onboarding"
+            href="/overview"
             className="rounded-full bg-sage px-8 py-4 text-base font-medium text-cream hover:bg-sage-dark transition-colors shadow-lg shadow-sage/20"
           >
             Start demo →

@@ -418,7 +418,7 @@ export default function OverviewPage() {
                           setPromisePrefill({ title: item.action, description: item.why });
                           setPromiseDrawerOpen(true);
                         }}
-                        className="mt-1.5 text-[11px] font-medium text-sage hover:text-sage-dark transition-colors"
+                        className="mt-1.5 text-[11px] cursor-pointer hover:underline font-medium text-sage hover:text-sage-dark transition-colors"
                       >
                         + Make a promise →
                       </button>

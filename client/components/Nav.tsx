@@ -7,10 +7,9 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const SCREENS = [
-  { href: "/onboarding", label: "Onboarding", short: "1", navHref: "/onboarding?reset=1" },
-  { href: "/overview", label: "Overview", short: "2" },
-  { href: "/what-if", label: "What If", short: "3" },
-  { href: "/promises", label: "Promises", short: "4" },
+  { href: "/overview", label: "Overview", short: "1" },
+  { href: "/what-if", label: "What If", short: "2" },
+  { href: "/promises", label: "Promises", short: "3" },
 ];
 
 export default function Nav() {
