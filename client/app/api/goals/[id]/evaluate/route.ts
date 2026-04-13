@@ -145,7 +145,7 @@ export async function GET(
 
   const goal = rowToGoal(row as Record<string, unknown>);
   const health = await getHealthSnapshot(request);
-  const profile = "profile" in health ? health.profile : marie;
+  const profile = (health as { profile?: typeof marie }).profile ?? marie;
   const last7 = health.last14Days.slice(-7);
 
   let result: GoalProgress;

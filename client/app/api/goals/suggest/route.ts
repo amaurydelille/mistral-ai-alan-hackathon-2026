@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
   const existingGoals = existingRaw ? existingRaw.split("|").filter(Boolean) : [];
 
   const { today, trends7d, trends30d } = health;
-  const profile = "profile" in health ? health.profile : marie;
+  const profile = (health as { profile?: typeof marie }).profile ?? marie;
 
   const prompt = `You are a personal health coach for ${profile.name}, ${profile.age}, ${profile.job}.
 Suggest exactly 3 health goals — at least 1 must be a behavioral/abstract goal (not a number target). Respond ONLY with valid JSON.
